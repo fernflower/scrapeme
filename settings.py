@@ -1,0 +1,1 @@
+SCRAPED_DIR = "scraped"
