@@ -8,7 +8,7 @@
 import scrapy
 
 
-class ScraperItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class PostItem(scrapy.Item):
+    title = scrapy.Field()
+    link = scrapy.Field()
+    text = scrapy.Field()

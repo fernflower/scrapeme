@@ -1,1 +1,0 @@
-SCRAPED_DIR = "scraped"

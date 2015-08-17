@@ -2,7 +2,7 @@ import os
 
 import scrapy
 
-import settings
+from scraper import settings
 
 
 class D3Spider(scrapy.Spider):
