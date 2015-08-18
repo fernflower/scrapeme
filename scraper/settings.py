@@ -16,6 +16,7 @@ NEWSPIDER_MODULE = 'scraper.spiders'
 
 # custom settings section
 SCRAPED_DIR = "data"
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

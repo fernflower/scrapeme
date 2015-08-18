@@ -12,3 +12,4 @@ class PostItem(scrapy.Item):
     title = scrapy.Field()
     link = scrapy.Field()
     text = scrapy.Field()
+    date = scrapy.Field()

@@ -1,7 +1,10 @@
 import argparse
+import datetime
 import json
 
 import pysolr
+
+from scraper import settings
 
 
 def main():
@@ -15,6 +18,11 @@ def main():
     solr = pysolr.Solr(args.solr_url, timeout=10)
     with open(args.input_file) as f:
         items = json.load(f)
+        # transfer date to datetime
+        for item in items:
+            str_date = item['date']
+            item['date'] = datetime.datetime.strptime(str_date,
+                                                      settings.DATE_FORMAT)
     solr.add(items)
 
 if __name__ == "__main__":
