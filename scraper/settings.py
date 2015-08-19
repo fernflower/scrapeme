@@ -16,9 +16,9 @@ NEWSPIDER_MODULE = 'scraper.spiders'
 
 # custom settings section
 SCRAPED_DIR = "data"
-DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-TEMPLATES_DIR = "webui/templates/"
-STATIC_DIR = "webui/common_static/"
+DATE_FORMAT = "%d-%m-%Y %H:%M:%S"
+SOLR_URL = "http://localhost:8080/solr"
+SOLR_TIMEOUT = 10
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

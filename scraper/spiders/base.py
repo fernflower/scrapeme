@@ -21,7 +21,7 @@ def _select(self, obj, var_name):
     """Applies either css or xpath selector to 'obj'
 
     The final choice depends on the class variable.
-    Var_name can be either 'post' or 'title'.
+    Var_name can be 'post','title', 'date' or 'link'.
     """
     schemas = {'_css': obj.css, '_xpath': obj.xpath}
     for schema, func in schemas.items():

@@ -2,7 +2,7 @@
 
 {% block data %}
   {% for item in items %}
-  <a href='{{item["link"]}}'><h1>{{item["title"]}}</h1></a>
+  <a href={{item["link"]}}><h1>{{item["title"]}}</h1></a>
   <p>{{item["text"]}}</p>
   <p>{{item["date"]}}</p>
   {% endfor %}
