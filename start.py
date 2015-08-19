@@ -1,3 +1,5 @@
+import datetime
+
 from flask import Flask, render_template, request
 import pysolr
 
@@ -13,7 +15,12 @@ def query_results():
     # FIXME some query preprocessing may be needed
     solr = pysolr.Solr(settings.SOLR_URL, timeout=settings.SOLR_TIMEOUT)
     items = solr.search(query, sort="date desc")
-    return render_template('show_items.html', items=items.docs)
+    items_out = list(items.docs)
+    for item in items_out:
+        dt = datetime.datetime.strptime(item['date'],
+                                        settings.SOLR_DATE_FORMAT)
+        item['date'] = dt.strftime(settings.DATE_FORMAT)
+    return render_template('show_items.html', items=items_out, query=query)
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ NEWSPIDER_MODULE = 'scraper.spiders'
 # custom settings section
 SCRAPED_DIR = "data"
 DATE_FORMAT = "%d-%m-%Y %H:%M:%S"
+SOLR_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 SOLR_URL = "http://localhost:8080/solr"
 SOLR_TIMEOUT = 10
 

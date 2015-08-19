@@ -1,9 +1,32 @@
 {% extends 'base.html' %}
 
 {% block data %}
+<form class="form-horizontal" method="get" action={{url_for('query_results')}}>
+    <fieldset>
+
+        <!-- Form Name -->
+        <legend></legend>
+
+        <!-- Text input-->
+        <div class="control-group">
+            <label class="control-label" for="search_fields"></label>
+            <div class="controls">
+                <input id="search_fiels" name="q" placeholder="jazz" class="input-xxlarge" type="text">
+                <label class="control-label" for="search_button"></label>
+                <button id="search_button" name="search_button" class="btn btn-primary">Search</button>
+
+            </div>
+        </div>
+    </fieldset>
+</form>
+
   {% for item in items %}
   <a href={{item["link"]}}><h1>{{item["title"]}}</h1></a>
   <p>{{item["text"]}}</p>
   <p>{{item["date"]}}</p>
   {% endfor %}
+{% endblock %}
+
+{% block title %}
+Show results for {{query}}
 {% endblock %}
