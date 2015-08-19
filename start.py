@@ -12,7 +12,7 @@ def query_results():
     query = request.args.get('q', '')
     # FIXME some query preprocessing may be needed
     solr = pysolr.Solr(settings.SOLR_URL, timeout=settings.SOLR_TIMEOUT)
-    items = solr.search(query)
+    items = solr.search(query, sort="date desc")
     return render_template('show_items.html', items=items.docs)
 
 

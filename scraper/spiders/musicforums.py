@@ -12,7 +12,7 @@ SpiderMeta = base.gen_spider_class(
 
 class MusicForumsSpider(SpiderMeta):
     post_css = "tr [class^=striped]"
-    text_xpath = "//span[contains(@class, 'body')]/text()"
+    text_xpath = "(//span[contains(@class, 'body')])[1]/text()"
     # relative to post
     title_xpath = "./td/a/text()"
     link_xpath = "./td/a/@href"

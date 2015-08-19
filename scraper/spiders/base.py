@@ -10,10 +10,9 @@ from scraper import settings
 
 def _fetch_body(self, response):
     item = scraper.items.PostItem()
-    item['title'] = response.meta['title']
-    item['link'] = response.meta['link']
-    item['date'] = response.meta['date']
-    item['text'] = " ".join(self.select(response, 'text').extract())
+    for meta_key in ['title', 'link', 'date']:
+        item[meta_key] = response.meta[meta_key]
+    item['text'] = "\n".join(self.select(response, 'text').extract())
     yield item
 
 
