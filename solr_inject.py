@@ -18,6 +18,11 @@ def main():
     solr = pysolr.Solr(args.solr_url, timeout=10)
     with open(args.input_file) as f:
         items = json.load(f)
+        # FIXME will be removed after prototype is finished
+        import render
+        raw_html = render.show_items(items)
+        with open('out.html', 'wb') as html:
+            html.write(raw_html.encode('utf-8'))
         # transfer date to datetime
         for item in items:
             str_date = item['date']
