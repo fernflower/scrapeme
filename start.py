@@ -4,6 +4,7 @@ from flask import Flask, render_template, request
 import pysolr
 
 from scraper import settings
+from scraper import utils
 
 app = Flask(__name__)
 
@@ -17,6 +18,7 @@ def query_results():
     items = solr.search(query, sort="date desc")
     items_out = list(items.docs)
     for item in items_out:
+        # change date format from ugly Solr to nice user defined
         dt = datetime.datetime.strptime(item['date'],
                                         settings.SOLR_DATE_FORMAT)
         item['date'] = dt.strftime(settings.DATE_FORMAT)

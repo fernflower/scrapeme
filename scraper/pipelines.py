@@ -1,11 +1,25 @@
-# -*- coding: utf-8 -*-
+from scrapy import exceptions
 
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
+from scraper import utils
 
 
-class ScraperPipeline(object):
+class DuplicatesPipeline(object):
+    def __init__(self):
+        self.last_ts = None
+
     def process_item(self, item, spider):
+        # if crawler launched for the first time - return any item found
+        if not spider.get_last_ts():
+            if not self.last_ts:
+                self.last_ts = item['date']
+            return item
+        # if last_ts exists -> any item older than last_ts is ignored
+        if not self.last_ts:
+            self.last_ts = spider.get_last_ts()
+        if utils.convert_to_datetime(item["date"]) <= self.last_ts:
+            raise exceptions.DropItem(
+                "Item %s date is older than last crawled" % item)
         return item
+
+    def close_spider(self, spider):
+        spider.set_last_ts(self.last_ts)

@@ -20,6 +20,7 @@ DATE_FORMAT = "%d-%m-%Y %H:%M:%S"
 SOLR_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 SOLR_URL = "http://localhost:8080/solr"
 SOLR_TIMEOUT = 10
+LAST_SEEN_FILENAME = "last"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -68,9 +69,9 @@ DOWNLOAD_DELAY=0.25
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'scraper.pipelines.SomePipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'scraper.pipelines.DuplicatesPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html

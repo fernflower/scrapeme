@@ -2,3 +2,4 @@ scraped
 *.pyc
 .ropeproject
 *.json
+data
