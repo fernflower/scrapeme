@@ -32,18 +32,19 @@ def _select(self, obj, var_name):
     raise exc.SpiderException("No such variable: %s" % var)
 
 
-# FIXME turn into prop
 def _get_last_ts(self):
     """Returns a datetime object"""
     last_seen_filename = os.path.join(settings.SCRAPED_DIR, self.name,
                                       settings.LAST_SEEN_FILENAME)
     if os.path.exists(last_seen_filename):
         with open(last_seen_filename) as f:
-            return utils.convert_to_datetime(f.read())
+            try:
+                return utils.convert_to_datetime(f.read())
+            except ValueError:
+                return None
     return None
 
 
-# FIXME turn into prop
 def _set_last_ts(self, date):
     date_str = (utils.convert_date_to_str(date)
                 if isinstance(date, datetime) else date)
@@ -75,7 +76,7 @@ def gen_spider_class(**kwargs):
     """
     cls_attrs = {'parse': _parse, 'fetch_body': _fetch_body,
                  'select': _select, 'process_date': _process_date,
-                 'get_last_ts': _get_last_ts, 'set_last_ts': _set_last_ts}
+                 'last_ts': property(fget=_get_last_ts, fset=_set_last_ts)}
     try:
         for req_arg in ["name", "allowed_domains", "start_urls"]:
             val = kwargs.pop(req_arg)
