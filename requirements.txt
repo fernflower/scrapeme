@@ -1,3 +1,5 @@
 scrapy==1.0.3
 pysolr==3.3.2
 Flask
+nose
+mock

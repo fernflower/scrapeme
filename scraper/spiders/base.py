@@ -34,10 +34,8 @@ def _select(self, obj, var_name):
 
 def _get_last_ts(self):
     """Returns a datetime object"""
-    last_seen_filename = os.path.join(settings.SCRAPED_DIR, self.name,
-                                      settings.LAST_SEEN_FILENAME)
-    if os.path.exists(last_seen_filename):
-        with open(last_seen_filename) as f:
+    if os.path.exists(self.last_seen_filename):
+        with open(self.last_seen_filename) as f:
             try:
                 return utils.convert_to_datetime(f.read())
             except ValueError:
@@ -48,9 +46,7 @@ def _get_last_ts(self):
 def _set_last_ts(self, date):
     date_str = (utils.convert_date_to_str(date)
                 if isinstance(date, datetime) else date)
-    last_seen_filename = os.path.join(settings.SCRAPED_DIR, self.name,
-                                      settings.LAST_SEEN_FILENAME)
-    with open(last_seen_filename, 'wb') as f:
+    with open(self.last_seen_filename, 'wb') as f:
         f.write(date_str)
 
 
@@ -76,7 +72,10 @@ def gen_spider_class(**kwargs):
     """
     cls_attrs = {'parse': _parse, 'fetch_body': _fetch_body,
                  'select': _select, 'process_date': _process_date,
-                 'last_ts': property(fget=_get_last_ts, fset=_set_last_ts)}
+                 'last_ts': property(fget=_get_last_ts, fset=_set_last_ts),
+                 'last_seen_filename': os.path.join(
+                     settings.SCRAPED_DIR, kwargs['name'],
+                     settings.LAST_SEEN_FILENAME)}
     try:
         for req_arg in ["name", "allowed_domains", "start_urls"]:
             val = kwargs.pop(req_arg)
