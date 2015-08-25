@@ -1,5 +1,6 @@
 import datetime
 import os
+import unittest
 
 from scraper.spiders import musicforums
 from scraper import utils
@@ -25,3 +26,16 @@ class TestLastTimestamp(base.TestBase):
         # last_ts is set after crawl job and the file exists as well
         self.assertIsNotNone(self.spider.last_ts)
         self.assertTrue(os.path.exists(self.spider.last_seen_filename))
+
+    @unittest.skip("Find a way to test with pipeline")
+    def test_fetch_new(self):
+        """Check that no pages older that last_ts are fetched.
+
+        Two subsequent runs should produce N and 0 items.
+        """
+        data = self.fake_request()
+        requests = self.spider.parse(data)
+        self.assertEqual(152, sum(1 for i in requests))
+        data_old = self.fake_request()
+        items_0 = self.spider.parse(data_old)
+        self.assertEqual(0, sum(1 for i in items_0))
