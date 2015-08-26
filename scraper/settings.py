@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import scraper.secret_settings as secret_settings
+
 # Scrapy settings for scraper project
 #
 # For simplicity, this file contains only settings considered important or
@@ -21,6 +23,12 @@ SOLR_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 SOLR_URL = "http://localhost:8080/solr"
 SOLR_TIMEOUT = 10
 LAST_SEEN_FILENAME = "last"
+TEMPLATES_DIR = "templates"
+# mailer settings
+MAILER_SETTINGS = secret_settings.MY_MAILER_SETTINGS
+MAIL_RECIPIENT_LIST = secret_settings.MY_MAIL_RECIPIENT_LIST
+# FIXME move queries out of global settings someday
+QUERY = u"бас,контрабас,jazz,джаз"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -71,6 +79,8 @@ DOWNLOAD_DELAY=0.25
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     'scraper.pipelines.DuplicatesPipeline': 300,
+    'scraper.pipelines.SolrInjectPipeline': 500,
+    'scraper.pipelines.SendMailPipeline': 700,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

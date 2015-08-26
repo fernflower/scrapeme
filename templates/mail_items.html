@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block data %}
+  {% for item in items %}
+  <a href={{item["link"]}}><h1>{{item["title"]}}</h1></a>
+  <p>{{item["text"]}}</p>
+  <p>{{item["date"]}}</p>
+  {% endfor %}
+{% endblock %}
+
+{% block title %}
+Show results for {{query}}
+{% endblock %}

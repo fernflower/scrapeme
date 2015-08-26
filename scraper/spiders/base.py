@@ -36,8 +36,9 @@ def _get_last_ts(self):
     """Returns a datetime object"""
     if os.path.exists(self.last_seen_filename):
         with open(self.last_seen_filename) as f:
+            f.seek(0)
             try:
-                return utils.convert_to_datetime(f.read())
+                return utils.convert_to_datetime(f.read().strip())
             except ValueError:
                 return None
     return None

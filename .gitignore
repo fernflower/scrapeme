@@ -3,3 +3,4 @@ scraped
 .ropeproject
 *.json
 data
+scraper/secret_settings.py
