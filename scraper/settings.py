@@ -28,7 +28,7 @@ TEMPLATES_DIR = "templates"
 MAILER_SETTINGS = secret_settings.MY_MAILER_SETTINGS
 MAIL_RECIPIENT_LIST = secret_settings.MY_MAIL_RECIPIENT_LIST
 # FIXME move queries out of global settings someday
-QUERY = u"бас,контрабас,jazz,джаз"
+QUERY = u"бас,контрабас,jazz,джаз,коллектив,скрипка,аккордеон,кахон"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

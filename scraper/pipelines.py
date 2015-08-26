@@ -69,18 +69,21 @@ class SendMailPipeline(object):
             return
         # show only new items that match the QUERY
         solr = pysolr.Solr(settings.SOLR_URL, timeout=settings.SOLR_TIMEOUT)
-        # query filtered by new_items links (link is a uid now)
+
+        # FIXME does Solr have a native way to do this?
         def escape(link):
             res = link
-            for c in ['/',':','?','&']:
+            for c in ['/', ':', '?', '&']:
                 res = res.replace(c, '\\'+c)
             return res
+
         if spider.last_ts is None:
             query = settings.QUERY
         else:
+            # query filtered by new_items links (link is a uid now)
             query = (u"%(query)s AND date:([%(date)s TO NOW])" %
-                    {'query': settings.QUERY,
-                     'date': utils.convert_date_to_solr_date(spider.last_ts)})
+                     {'query': settings.QUERY,
+                      'date': utils.convert_date_to_solr_date(spider.last_ts)})
         items = solr.search(query, sort="date desc")
         # convert dates to human-readable non-solr format
         for item in items:
@@ -94,5 +97,8 @@ class SendMailPipeline(object):
         template = env.get_template('mail_items.html')
         body = template.render(items=items, query=settings.QUERY)
         mailer.send(to=settings.MAIL_RECIPIENT_LIST,
-                    subject="%d new items from %s" % (len(items), spider.name),
+                    subject=(
+                        "%(count)s new items from %(link)s since %(date)s" %
+                        {'count': len(items), 'link': spider.name,
+                         'date': utils.convert_date_to_str(spider.last_ts)}),
                     body=body, mimetype="text/html; charset=utf-8")
