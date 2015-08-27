@@ -96,9 +96,12 @@ class SendMailPipeline(object):
         env = Environment(loader=FileSystemLoader(settings.TEMPLATES_DIR))
         template = env.get_template('mail_items.html')
         body = template.render(items=items, query=settings.QUERY)
+        date = ("the very beginning" if not spider.last_ts
+                else utils.convert_date_to_str(spider.last_ts))
         mailer.send(to=settings.MAIL_RECIPIENT_LIST,
                     subject=(
                         "%(count)s new items from %(link)s since %(date)s" %
-                        {'count': len(items), 'link': spider.name,
-                         'date': utils.convert_date_to_str(spider.last_ts)}),
+                        {'count': len(items),
+                         'link': spider.name,
+                         'date': date}),
                     body=body, mimetype="text/html; charset=utf-8")
