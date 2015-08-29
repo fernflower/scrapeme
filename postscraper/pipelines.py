@@ -11,22 +11,23 @@ from postscraper import utils
 
 class DuplicatesPipeline(object):
     def __init__(self):
-        # datetime object
+        # datetime object to update last crawl in close_spider()
         self.last_ts = None
 
     def process_item(self, item, spider):
-        # if crawler launched for the first time - return any item found
-        if not spider.last_ts:
-            self.last_ts = utils.convert_to_datetime(item['date'])
-            return item
+        item_date = utils.convert_to_datetime(item['date'])
+        # if crawler launched for the first time - get first item's date as
+        # last_ts; else take last launch time as starting point
         if not self.last_ts:
-            self.last_ts = spider.last_ts
-        # if last_ts exists -> any item older than last_ts is ignored
-        if utils.convert_to_datetime(item["date"]) <= spider.last_ts:
+            self.last_ts = (item_date if not spider.last_ts else spider.last_ts)
+        # first launch -> save all items found
+        if not spider.last_ts:
+            return item
+        # if last_ts exists -> any item older than last crawl time is ignored
+        if item_date <= spider.last_ts:
             raise exceptions.DropItem(
                 "Item %s date is older than last crawled" % item)
         # in case posts can be updated -> check that last ts is maximum
-        item_date = utils.convert_to_datetime(item['date'])
         if (self.last_ts < item_date):
             self.last_ts = item_date
         return item
@@ -40,6 +41,8 @@ class SolrInjectPipeline(object):
         self.new_items = []
 
     def process_item(self, item, spider):
+        # add a name of the spider it came from
+        item['source'] = spider.name
         self.new_items.append(item)
         return item
 
@@ -55,18 +58,8 @@ class SolrInjectPipeline(object):
 
 
 class SendMailPipeline(object):
-
-    def __init__(self):
-        self.new_items = []
-
-    def process_item(self, item, spider):
-        self.new_items.append(item)
-        return item
-
     def close_spider(self, spider):
         """Sends an email with new items if any"""
-        if len(self.new_items) == 0:
-            return
         # show only new items that match the QUERY
         solr = pysolr.Solr(settings.SOLR_URL, timeout=settings.SOLR_TIMEOUT)
 
@@ -78,13 +71,16 @@ class SendMailPipeline(object):
             return res
 
         if spider.last_ts is None:
-            query = settings.QUERY
+            query = u"%s AND source:'%s'" % (settings.QUERY, spider.name)
         else:
-            # query filtered by new_items links (link is a uid now)
-            query = (u"%(query)s AND date:([%(date)s TO NOW])" %
+            query = ((u"%(query)s AND date:([%(date)s TO NOW]) "
+                     "AND source: '%(source)s'") %
                      {'query': settings.QUERY,
-                      'date': utils.convert_date_to_solr_date(spider.last_ts)})
-        items = solr.search(query, sort="date desc")
+                      'date': utils.convert_date_to_solr_date(spider.last_ts),
+                      'source': spider.name})
+        items = solr.search(query, sort="date desc", rows=settings.QUERY_ROWS)
+        if len(items) == 0:
+            return
         # convert dates to human-readable non-solr format
         for item in items:
             # FIXME move to utils

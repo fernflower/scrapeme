@@ -13,3 +13,5 @@ class PostItem(scrapy.Item):
     link = scrapy.Field()
     text = scrapy.Field()
     date = scrapy.Field()
+    # crawler name where the item came from
+    source = scrapy.Field()

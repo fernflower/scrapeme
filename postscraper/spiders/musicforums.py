@@ -16,10 +16,11 @@ class MusicForumsSpider(SpiderMeta):
     # relative to post
     title_xpath = "./td/a/text()"
     link_xpath = "./td/a/@href"
-    date_xpath = u".//a[contains(@title, 'Обновлено')]/@href"
+    date_xpath = u".//a[contains(@title, 'Обновлено')]/text()"
 
     def process_date(self, sel):
         date = self.select(sel, 'date')[0].extract().strip()
-        seconds = date.split('#N')[-1]
-        dt = datetime.datetime.fromtimestamp(int(seconds))
+        # musicforums stores date as %d-%m %H:%M (ex. 28-08 19:53)
+        date_format = "%d-%m %H:%M"
+        dt = datetime.datetime.strptime(date, date_format)
         return dt.strftime(settings.DATE_FORMAT)

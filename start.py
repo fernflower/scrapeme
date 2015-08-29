@@ -4,7 +4,6 @@ from flask import Flask, render_template, request
 import pysolr
 
 from postscraper import settings
-from postscraper import utils
 
 app = Flask(__name__)
 
@@ -15,7 +14,7 @@ def query_results():
     query = request.args.get('q', '')
     # FIXME some query preprocessing may be needed
     solr = pysolr.Solr(settings.SOLR_URL, timeout=settings.SOLR_TIMEOUT)
-    items = solr.search(query, sort="date desc")
+    items = solr.search(query, sort="date desc", rows=settings.QUERY_ROWS)
     items_out = list(items.docs)
     for item in items_out:
         # change date format from ugly Solr to nice user defined

@@ -74,6 +74,7 @@ def _create_spider_dir(name):
 
 # below will be typical VK Spider methods
 
+
 def _get_vk_url(cls, method, **kwargs):
     """Builds a url to retrieve data from VK
 
@@ -81,7 +82,8 @@ def _get_vk_url(cls, method, **kwargs):
     key1=value1&key2=value2 ...
     """
     return cls.SCRAPE_WALL_URL % "&".join(["%s=%s" % (k, v)
-                                            for (k, v) in kwargs.items()])
+                                           for (k, v) in kwargs.items()])
+
 
 def _parse_vk(self, response):
     """Deals with json data received from VK API"""

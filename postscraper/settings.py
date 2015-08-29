@@ -28,7 +28,9 @@ TEMPLATES_DIR = "templates"
 MAILER_SETTINGS = secret_settings.MY_MAILER_SETTINGS
 MAIL_RECIPIENT_LIST = secret_settings.MY_MAIL_RECIPIENT_LIST
 # FIXME move queries out of global settings someday
-QUERY = u"бас,контрабас,jazz,джаз,коллектив,скрипка,аккордеон,кахон"
+QUERY = u"бас,контрабас,jazz,джаз,скрипка,аккордеон,кахон,французский"
+# max number of posts to output
+QUERY_ROWS = 100
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -79,8 +81,10 @@ DOWNLOAD_DELAY=0.25
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     'postscraper.pipelines.DuplicatesPipeline': 300,
-    'postscraper.pipelines.SolrInjectPipeline': 500,
-    'postscraper.pipelines.SendMailPipeline': 700,
+    # XXX sendmail before inject as close_spider methods are called
+    # from the top of stack
+    'postscraper.pipelines.SendMailPipeline': 500,
+    'postscraper.pipelines.SolrInjectPipeline': 700,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
