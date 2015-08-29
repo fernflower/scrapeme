@@ -2,11 +2,11 @@ import datetime
 from jinja2 import Environment, FileSystemLoader
 import pysolr
 from scrapy import exceptions
-from scraper import mymailsender
+from postscraper import mymailsender
 from scrapy.settings import Settings
 
-from scraper import settings
-from scraper import utils
+from postscraper import settings
+from postscraper import utils
 
 
 class DuplicatesPipeline(object):

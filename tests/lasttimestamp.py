@@ -2,8 +2,8 @@ import datetime
 import os
 import unittest
 
-from scraper.spiders import musicforums
-from scraper import utils
+from postscraper.spiders import musicforums
+from postscraper import utils
 
 from tests import base
 

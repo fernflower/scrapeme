@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 
-from scraper.spiders import base
-from scraper import settings
+from postscraper.spiders import base
+from postscraper import settings
 
 SpiderMeta = base.gen_spider_class(
     name="musicforums", allowed_domains=["musicforums.ru"],
@@ -21,6 +21,5 @@ class MusicForumsSpider(SpiderMeta):
     def process_date(self, sel):
         date = self.select(sel, 'date')[0].extract().strip()
         seconds = date.split('#N')[-1]
-        # FIXME return datetime in order to load in solr
         dt = datetime.datetime.fromtimestamp(int(seconds))
         return dt.strftime(settings.DATE_FORMAT)

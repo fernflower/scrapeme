@@ -3,8 +3,8 @@ import datetime
 from flask import Flask, render_template, request
 import pysolr
 
-from scraper import settings
-from scraper import utils
+from postscraper import settings
+from postscraper import utils
 
 app = Flask(__name__)
 

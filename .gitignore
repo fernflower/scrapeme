@@ -3,5 +3,5 @@ scraped
 .ropeproject
 *.json
 data
-scraper/secret_settings.py
+postscraper/secret_settings.py
 .venv

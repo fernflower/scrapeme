@@ -4,7 +4,7 @@ import json
 
 import pysolr
 
-from scraper import settings
+from postscraper import settings
 
 
 def main():

@@ -2,7 +2,7 @@ import os
 
 import scrapy
 
-from scraper import settings
+from postscraper import settings
 
 
 class D3Spider(scrapy.Spider):
@@ -19,7 +19,7 @@ class D3Spider(scrapy.Spider):
         name = response.url.split('/')[2] + '.html'
         dirname = os.path.join(settings.SCRAPED_DIR, self.name)
         path = os.path.join(dirname, name)
-        # if no SCRAPED_DIR/scrapername directory exists, create one
+        # if no SCRAPED_DIR/postscrapername directory exists, create one
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         with open(path, 'wb') as f:

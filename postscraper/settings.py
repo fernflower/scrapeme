@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import scraper.secret_settings as secret_settings
+import postscraper.secret_settings as secret_settings
 
-# Scrapy settings for scraper project
+# Scrapy settings for postscraper project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -11,10 +11,10 @@ import scraper.secret_settings as secret_settings
 #     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'scraper'
+BOT_NAME = 'postscraper'
 
-SPIDER_MODULES = ['scraper.spiders']
-NEWSPIDER_MODULE = 'scraper.spiders'
+SPIDER_MODULES = ['postscraper.spiders']
+NEWSPIDER_MODULE = 'postscraper.spiders'
 
 # custom settings section
 SCRAPED_DIR = "data"
@@ -32,7 +32,7 @@ QUERY = u"бас,контрабас,jazz,джаз,коллектив,скрип�
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'scraper (+http://www.yourdomain.com)'
+#USER_AGENT = 'postscraper (+http://www.yourdomain.com)'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS=32
@@ -60,13 +60,13 @@ DOWNLOAD_DELAY=0.25
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'scraper.middlewares.MyCustomSpiderMiddleware': 543,
+#    'postscraper.middlewares.MyCustomSpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    'scraper.middlewares.MyCustomDownloaderMiddleware': 543,
+#    'postscraper.middlewares.MyCustomDownloaderMiddleware': 543,
 #}
 
 # Enable or disable extensions
@@ -78,9 +78,9 @@ DOWNLOAD_DELAY=0.25
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'scraper.pipelines.DuplicatesPipeline': 300,
-    'scraper.pipelines.SolrInjectPipeline': 500,
-    'scraper.pipelines.SendMailPipeline': 700,
+    'postscraper.pipelines.DuplicatesPipeline': 300,
+    'postscraper.pipelines.SolrInjectPipeline': 500,
+    'postscraper.pipelines.SendMailPipeline': 700,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

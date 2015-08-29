@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from scraper import settings
+from postscraper import settings
 
 
 def convert_to_datetime(date_str):
