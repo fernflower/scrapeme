@@ -73,10 +73,13 @@ class SendMailPipeline(object):
         if spider.last_ts is None:
             query = u"%s AND source:'%s'" % (settings.QUERY, spider.name)
         else:
+            # increment date by 1 second to hide last seen result
+            # FIXME how can we do it with a solr query?
+            inc_date = spider.last_ts + datetime.timedelta(0, 1)
             query = ((u"%(query)s AND date:([%(date)s TO NOW]) "
                      "AND source: '%(source)s'") %
                      {'query': settings.QUERY,
-                      'date': utils.convert_date_to_solr_date(spider.last_ts),
+                      'date': utils.convert_date_to_solr_date(inc_date),
                       'source': spider.name})
         items = solr.search(query, sort="date desc", rows=settings.QUERY_ROWS)
         if len(items) == 0:

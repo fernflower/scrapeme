@@ -81,12 +81,12 @@ def _get_vk_url(cls, method, **kwargs):
     Arguments from **kwargs will be passed in form
     key1=value1&key2=value2 ...
     """
-    return cls.SCRAPE_WALL_URL % "&".join(["%s=%s" % (k, v)
-                                           for (k, v) in kwargs.items()])
+    return cls.API_URL % (method, "&".join(["%s=%s" % (k, v)
+                                           for (k, v) in kwargs.items()]))
 
 
-def _parse_vk(self, response):
-    """Deals with json data received from VK API"""
+def _parse_vk_wall(self, response):
+    """Deals with wall posts' json data received from VK API"""
     data = json.loads(response.body)
     posts_data = data["response"][1:]
     for post in posts_data:
@@ -94,18 +94,68 @@ def _parse_vk(self, response):
         item['date'] = utils.convert_date_to_str(
             datetime.fromtimestamp(post['date']))
         item['text'] = post['text']
-        item['title'] = ("Post from %s" % item['date'])
+        item['title'] = ("Wall post from %s" % item['date'])
         item['link'] = ("http://vk.com/public%(group)s?w=wall-%(id)s" %
                         {'group': abs(self.owner_id),
                          'id': "%s_%s" % (abs(self.owner_id), post['id'])})
         yield item
 
 
+def _parse_vk_board(self, response):
+    """Deals with board comments' json data received from VK API"""
+    data = json.loads(response.body)
+    count = data["response"]["comments"][0]
+    topic_id = response.meta['topic_id']
+
+    def _process_comments(response):
+        data = json.loads(response.body)
+        posts_data = data["response"]["comments"][1:]
+        for post in posts_data:
+            item = postscraper.items.PostItem()
+            item['date'] = utils.convert_date_to_str(
+                datetime.fromtimestamp(post['date']))
+            item['text'] = post['text']
+            item['title'] = ("Board post from %s" % item['date'])
+            item['link'] = ("http://vk.com/public%(group)s?w=wall-%(id)s" %
+                            {'group': abs(self.owner_id),
+                             'id': "%s_%s" % (abs(self.owner_id), post['id'])})
+            yield item
+
+    # FIXME last 100 comments per request is VK API limitation
+    fetch_last_100 = self.get_url('board.getComments',
+                                  count=100,
+                                  offset=max(count-100, 0),
+                                  topic_id=topic_id,
+                                  group_id=abs(self.owner_id),
+                                  api_version=self.API_VERSION,
+                                  format=self.FORMAT)
+    yield scrapy.Request(fetch_last_100, callback=_process_comments)
+
+
 def _start_requests_vk(self):
-    scrape_url = self.get_url(
+    scrape_wall_url = self.get_url(
         'wall.get', count=self.count, owner_id=self.owner_id,
         offset=self.offset, version=self.API_VERSION, format=self.FORMAT)
-    yield self.make_requests_from_url(scrape_url)
+    scrape_board_urls = [self.get_url('board.getComments',
+                                      count=1,
+                                      offset=0,
+                                      topic_id=topic_id,
+                                      group_id=abs(self.owner_id),
+                                      version=self.API_VERSION,
+                                      format=self.FORMAT)
+                         for topic_id in self.boards_to_crawl]
+    urls = [('wall', scrape_wall_url)]
+    urls.extend([('board', url) for url in scrape_board_urls])
+    for (i, (type, url)) in enumerate(urls):
+        if type == 'wall':
+            request = scrapy.Request(url, dont_filter=True,
+                                     callback=self.parse_wall)
+        else:
+            request = scrapy.Request(
+                url, dont_filter=True,
+                callback=self.parse_board,
+                meta={'topic_id': self.boards_to_crawl[i-1]})
+        yield request
 
 
 def gen_spider_class(**kwargs):
@@ -135,18 +185,20 @@ def gen_vk_spider_class(**kwargs):
 
     Spider will scrape wall, owner_id argument is obligatory.
     """
-    cls_attrs = {'last_ts': property(fget=_get_last_ts, fset=_set_last_ts),
-                 'last_seen_filename': os.path.join(
-                     settings.SCRAPED_DIR, kwargs['name'],
-                     settings.LAST_SEEN_FILENAME),
-                 'SCRAPE_WALL_URL': 'https://api.vk.com/method/wall.get?%s',
-                 'API_VERSION': '5.37',
-                 'FORMAT': 'json',
-                 'count': kwargs.get('count', 50),
-                 'offset': kwargs.get('offset', 0),
-                 'parse': _parse_vk,
-                 'get_url': _get_vk_url,
-                 'start_requests': _start_requests_vk}
+    cls_attrs = {
+        'last_ts': property(fget=_get_last_ts, fset=_set_last_ts),
+        'last_seen_filename': os.path.join(settings.SCRAPED_DIR, kwargs['name'],
+                                           settings.LAST_SEEN_FILENAME),
+        'API_URL': 'https://api.vk.com/method/%s?%s',
+        'API_VERSION': '5.37',
+        'FORMAT': 'json',
+        'boards_to_crawl': [],
+        'count': kwargs.get('count', 50),
+        'offset': kwargs.get('offset', 0),
+        'parse_wall': _parse_vk_wall,
+        'parse_board': _parse_vk_board,
+        'get_url': _get_vk_url,
+        'start_requests': _start_requests_vk}
     try:
         for req_arg in ["owner_id", "name"]:
             cls_attrs[req_arg] = kwargs.pop(req_arg)
