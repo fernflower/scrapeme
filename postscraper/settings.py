@@ -23,13 +23,14 @@ SOLR_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 SOLR_URL = "http://localhost:8080/solr"
 SOLR_TIMEOUT = 10
 LAST_SEEN_FILENAME = "last"
+EMAIL_BODY_FILENAME = "email_text"
 TEMPLATES_DIR = "templates"
 # mailer settings
 MAILER_SETTINGS = secret_settings.MY_MAILER_SETTINGS
 MAIL_RECIPIENT_LIST = secret_settings.MY_MAIL_RECIPIENT_LIST
 # FIXME move queries out of global settings someday
 QUERY = u"бас,контрабас,jazz,джаз,скрипка,аккордеон,кахон,французский"
-# max number of posts to output
+# max number of posts to output per source
 QUERY_ROWS = 100
 
 
@@ -61,9 +62,9 @@ DOWNLOAD_DELAY=0.25
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
-#SPIDER_MIDDLEWARES = {
-#    'postscraper.middlewares.MyCustomSpiderMiddleware': 543,
-#}
+# SPIDER_MIDDLEWARES = {
+    #'postscraper.middlewares.SolrInjectMiddleware': 543,
+# }
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
@@ -80,10 +81,10 @@ DOWNLOAD_DELAY=0.25
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'postscraper.pipelines.DuplicatesPipeline': 300,
-    # XXX sendmail before inject as close_spider methods are called
-    # from the top of stack
+    'postscraper.pipelines.RemoveDuplicatesPipeline': 300,
     'postscraper.pipelines.SendMailPipeline': 500,
+    # solr inject has to be after sendMail as injection is done in
+    # close_spider() and these funcs are called in reverse order
     'postscraper.pipelines.SolrInjectPipeline': 700,
 }
 

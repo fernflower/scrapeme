@@ -1,20 +1,40 @@
 import datetime
+
 from jinja2 import Environment, FileSystemLoader
 import pysolr
 from scrapy import exceptions
-from postscraper import mymailsender
-from scrapy.settings import Settings
 
 from postscraper import settings
 from postscraper import utils
 
 
-class DuplicatesPipeline(object):
+class SolrInjectPipeline(object):
     def __init__(self):
-        # datetime object to update last crawl in close_spider()
+        self.solr = pysolr.Solr(settings.SOLR_URL,
+                                timeout=settings.SOLR_TIMEOUT)
+        self.items = []
+
+    def process_item(self, item, spider):
+        self.items.append(item)
+        return item
+
+    def close_spider(self, spider):
+        # inject new items into Solr
+        for item in self.items:
+            str_date = item['date']
+            item['date'] = datetime.datetime.strptime(str_date,
+                                                      settings.DATE_FORMAT)
+        self.solr.add(self.items)
+
+
+class RemoveDuplicatesPipeline(object):
+    def __init__(self):
+        # datetime object to update last crawl in
         self.last_ts = None
 
     def process_item(self, item, spider):
+        # inject source name
+        item['source'] = spider.name
         item_date = utils.convert_to_datetime(item['date'])
         # if crawler launched for the first time - get first item's date as
         # last_ts; else take last launch time as starting point
@@ -33,36 +53,21 @@ class DuplicatesPipeline(object):
         return item
 
     def close_spider(self, spider):
+        # update last crawl time
         spider.last_ts = self.last_ts
 
 
-class SolrInjectPipeline(object):
-    def __init__(self):
-        self.new_items = []
-
-    def process_item(self, item, spider):
-        # add a name of the spider it came from
-        item['source'] = spider.name
-        self.new_items.append(item)
-        return item
-
-    def close_spider(self, spider):
-        if len(self.new_items) == 0:
-            return
-        solr = pysolr.Solr(settings.SOLR_URL, timeout=settings.SOLR_TIMEOUT)
-        for item in self.new_items:
-            str_date = item['date']
-            item['date'] = datetime.datetime.strptime(str_date,
-                                                      settings.DATE_FORMAT)
-        solr.add(self.new_items)
-
-
 class SendMailPipeline(object):
-    def close_spider(self, spider):
-        """Sends an email with new items if any"""
-        # show only new items that match the QUERY
-        solr = pysolr.Solr(settings.SOLR_URL, timeout=settings.SOLR_TIMEOUT)
+    def __init__(self):
+        self.solr = pysolr.Solr(settings.SOLR_URL,
+                                timeout=settings.SOLR_TIMEOUT)
 
+    def _filter_by_query(self, spider):
+        """Return those items from recently fetched that match the QUERY.
+
+        Make sure that items have been uploaded to Solr but last crawl time
+        not updated before calling this func
+        """
         # FIXME does Solr have a native way to do this?
         def escape(link):
             res = link
@@ -71,36 +76,42 @@ class SendMailPipeline(object):
             return res
 
         if spider.last_ts is None:
-            query = u"%s AND source:'%s'" % (settings.QUERY, spider.name)
+            query = u"%s AND source:%s" % (settings.QUERY, spider.name)
         else:
             # increment date by 1 second to hide last seen result
             # FIXME how can we do it with a solr query?
             inc_date = spider.last_ts + datetime.timedelta(0, 1)
             query = ((u"%(query)s AND date:([%(date)s TO NOW]) "
-                     "AND source: '%(source)s'") %
+                     "AND source: %(source)s") %
                      {'query': settings.QUERY,
                       'date': utils.convert_date_to_solr_date(inc_date),
                       'source': spider.name})
-        items = solr.search(query, sort="date desc", rows=settings.QUERY_ROWS)
-        if len(items) == 0:
-            return
+        items = self.solr.search(query, sort="date desc",
+                                 rows=settings.QUERY_ROWS)
         # convert dates to human-readable non-solr format
         for item in items:
             # FIXME move to utils
             dt = datetime.datetime.strptime(item['date'],
                                             settings.SOLR_DATE_FORMAT)
             item['date'] = dt.strftime(settings.DATE_FORMAT)
-        mailer = mymailsender.MailSender.from_settings(Settings(
-            settings.MAILER_SETTINGS))
+        return items
+
+    def close_spider(self, spider):
+        """Sends an email with new items if any"""
+        items = self._filter_by_query(spider)
+        # don't generate an email with 0 results
+        if len(items) == 0:
+            spider.email = None
+            return
         env = Environment(loader=FileSystemLoader(settings.TEMPLATES_DIR))
         template = env.get_template('mail_items.html')
         body = template.render(items=items, query=settings.QUERY)
+        # save email body in a file
         date = ("the very beginning" if not spider.last_ts
                 else utils.convert_date_to_str(spider.last_ts))
-        mailer.send(to=settings.MAIL_RECIPIENT_LIST,
-                    subject=(
-                        "%(count)s new items from %(link)s since %(date)s" %
-                        {'count': len(items),
-                         'link': spider.name,
-                         'date': date}),
-                    body=body, mimetype="text/html; charset=utf-8")
+        text = ("<h1>"
+                "%(count)s new items from %(link)s since %(date)s</h1>\n"
+                "%(body)s"
+                % {'count': len(items), 'link': spider.name,
+                    'date': date, 'body': body})
+        spider.email = text
