@@ -1,9 +1,7 @@
 from postscraper.spiders import base
 
 
-SpiderMeta = base.gen_vk_spider_class(
-    name="formusical_vk", owner_id=-33576030)
-
-
-class VkSpider(SpiderMeta):
-    boards_to_crawl = [27643700]
+# a general code for automatic VK Spider creation.
+spider = base.create_vk_spider(
+    name="formusical_vk", owner_id=-33576030, boards=[27643700],
+    module=__name__)

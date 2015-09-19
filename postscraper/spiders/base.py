@@ -176,23 +176,25 @@ def _start_requests_vk(self):
         yield request
 
 
-# FIXME move common props to parent class
+def _common_attrs_dict(spider_name):
+    return {'last_ts': property(fget=_get_last_ts, fset=_set_last_ts),
+            'last_seen_filename': os.path.join(settings.SCRAPED_DIR,
+                                               spider_name,
+                                               settings.LAST_SEEN_FILENAME),
+            'email': property(fget=_get_email, fset=_set_email),
+            'email_filename': os.path.join(settings.SCRAPED_DIR, spider_name,
+                                           settings.EMAIL_BODY_FILENAME)}
+
+
 def gen_spider_class(**kwargs):
     """Generates a spider class with given name/allowed_domains/start_urls
 
     The class will have a default parse method.
     Besides a directory for spider data will be created.
     """
-    cls_attrs = {'parse': _parse, 'fetch_body': _fetch_body,
-                 'select': _select, 'process_date': _process_date,
-                 'last_ts': property(fget=_get_last_ts, fset=_set_last_ts),
-                 'email': property(fget=_get_email, fset=_set_email),
-                 'last_seen_filename': os.path.join(
-                     settings.SCRAPED_DIR, kwargs['name'],
-                     settings.LAST_SEEN_FILENAME),
-                 'email_filename': os.path.join(
-                     settings.SCRAPED_DIR, kwargs['name'],
-                     settings.EMAIL_BODY_FILENAME)}
+    cls_attrs = _common_attrs_dict(kwargs.get('name'))
+    cls_attrs.update({'parse': _parse, 'fetch_body': _fetch_body,
+                      'select': _select, 'process_date': _process_date})
     try:
         for req_arg in ["name", "allowed_domains", "start_urls"]:
             cls_attrs[req_arg] = kwargs.pop(req_arg)
@@ -203,30 +205,23 @@ def gen_spider_class(**kwargs):
     return type(cls_attrs['name'] + "Class", (scrapy.Spider, ), cls_attrs)
 
 
-# FIXME move common props to parent class
 def gen_vk_spider_class(**kwargs):
     """Generates a VK spider class with given name
 
     Spider will scrape wall, owner_id argument is obligatory.
     """
-    cls_attrs = {
-        'last_ts': property(fget=_get_last_ts, fset=_set_last_ts),
-        'last_seen_filename': os.path.join(settings.SCRAPED_DIR, kwargs['name'],
-                                           settings.LAST_SEEN_FILENAME),
-        'email': property(fget=_get_email, fset=_set_email),
-        'email_filename': os.path.join(
-            settings.SCRAPED_DIR, kwargs['name'],
-            settings.EMAIL_BODY_FILENAME),
+    cls_attrs = _common_attrs_dict(kwargs.get('name'))
+    cls_attrs.update({
         'API_URL': 'https://api.vk.com/method/%s?%s',
         'API_VERSION': '5.37',
         'FORMAT': 'json',
-        'boards_to_crawl': [],
+        'boards_to_crawl': kwargs.get('boards') or [],
         'count': kwargs.get('count', 50),
         'offset': kwargs.get('offset', 0),
         'parse_wall': _parse_vk_wall,
         'parse_board': _parse_vk_board,
         'get_url': _get_vk_url,
-        'start_requests': _start_requests_vk}
+        'start_requests': _start_requests_vk})
     try:
         for req_arg in ["owner_id", "name"]:
             cls_attrs[req_arg] = kwargs.pop(req_arg)
@@ -235,3 +230,18 @@ def gen_vk_spider_class(**kwargs):
             "%s attribute is required for spider creation" % req_arg)
     _create_spider_dir(cls_attrs['name'])
     return type(cls_attrs['name'] + "Class", (scrapy.Spider, ), cls_attrs)
+
+
+def create_vk_spider(name, owner_id, module, boards=None):
+    generated = gen_vk_spider_class(name=name, owner_id=owner_id)
+    # a nasty hack to make generated class discoverable by scrapy
+    generated.__module__ = module
+    return generated
+
+
+def create_site_spider(name, url, module, selectors_dict=None):
+    allowed_domains = [urlparse.urlsplit(url)[1]]
+    generated = gen_spider_class(name=name, allowed_domains=allowed_domains,
+                                 start_urls=[url])
+    generated.__module__ = module
+    return generated
