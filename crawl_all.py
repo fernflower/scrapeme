@@ -1,8 +1,6 @@
-from importlib import import_module
 import logging
-import subprocess
 
-from scrapy import crawler, signals
+from scrapy import signals
 from scrapy.crawler import CrawlerRunner
 from scrapy.settings import Settings
 from scrapy.utils import misc, spider
@@ -52,13 +50,14 @@ def main():
          'ITEM_PIPELINES': settings.ITEM_PIPELINES}))
 
     dispatcher.connect(on_close, signal=signals.spider_closed)
-    for module in misc.walk_modules(settings.NEWSPIDER_MODULE):
+    spider_modules = misc.walk_modules(settings.NEWSPIDER_MODULE)
+    for module in spider_modules:
         # crawl responsibly
         spiders = [s for s in spider.iter_spider_classes(module)]
         # if no spider found -> continue
         if spiders == []:
             continue
-        spider_cls = spiders[0]
+        spider_cls = spiders[-1]
         RUNNING_CRAWLERS.append(spider_cls)
         runner.crawl(spider_cls)
     d = runner.join()

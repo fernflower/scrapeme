@@ -19,7 +19,7 @@ SpiderCls = base.create_site_spider(
         "date_xpath": u".//a[contains(@title, 'Обновлено')]/text()"})
 
 
-class MusicForumsSpider(SpiderCls):
+class Spider(SpiderCls):
     post_css = "tr [class^=striped]"
     text_xpath = "(//span[contains(@class, 'body')])[1]/text()"
     # relative to post

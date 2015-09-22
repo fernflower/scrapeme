@@ -81,6 +81,7 @@ def _parse(self, response):
 
 
 def _process_date(self, sel):
+    """Returns date as string in the correct format"""
     return self.select(sel, 'date')[0].extract().strip()
 
 
@@ -244,4 +245,7 @@ def create_site_spider(name, url, module, selectors_dict=None):
     generated = gen_spider_class(name=name, allowed_domains=allowed_domains,
                                  start_urls=[url])
     generated.__module__ = module
+    # FIXME possible security hazard
+    for var, value in selectors_dict.items():
+        setattr(generated, var, value)
     return generated

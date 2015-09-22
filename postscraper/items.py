@@ -12,6 +12,7 @@ class PostItem(scrapy.Item):
     title = scrapy.Field()
     link = scrapy.Field()
     text = scrapy.Field()
+    # date is stored as string
     date = scrapy.Field()
     # crawler name where the item came from
     source = scrapy.Field()
