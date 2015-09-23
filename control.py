@@ -1,4 +1,7 @@
+import argparse
+import json
 import logging
+import sys
 
 from scrapy import signals
 from scrapy.crawler import CrawlerRunner
@@ -41,7 +44,24 @@ def on_close(spider):
     LOG.info("Spider closed: %s" % spider)
 
 
-def main():
+def _find_spiders():
+    """Find all classes that subclass scrapy.Spider"""
+    res = []
+    for module in misc.walk_modules(settings.NEWSPIDER_MODULE):
+        # crawl responsibly
+        spiders = [s for s in spider.iter_spider_classes(module)]
+        # if no spider found -> continue
+        if spiders == []:
+            continue
+        # FIXME not the best way to find a spider, is based on current practice
+        # of only one spider in a file and the final may subclass a generated
+        # one
+        spider_cls = spiders[-1]
+        res.append(spider_cls)
+    return res
+
+
+def crawl_all():
     # set up the crawler and start to crawl
     # one spider at a time
     # FIXME find a way to use postscraper.settings
@@ -51,19 +71,35 @@ def main():
 
     dispatcher.connect(on_close, signal=signals.spider_closed)
     spider_modules = misc.walk_modules(settings.NEWSPIDER_MODULE)
-    for module in spider_modules:
-        # crawl responsibly
-        spiders = [s for s in spider.iter_spider_classes(module)]
-        # if no spider found -> continue
-        if spiders == []:
-            continue
-        spider_cls = spiders[-1]
+    for spider_cls in _find_spiders():
         RUNNING_CRAWLERS.append(spider_cls)
         runner.crawl(spider_cls)
     d = runner.join()
     d.addBoth(lambda _: send_mail())
 
     internet.reactor.run()
+
+
+def export(stream=sys.stdout):
+    json_list = [s.to_dict() for s in _find_spiders()]
+    json.dump(json_list, stream, separators=(',', ': '), indent=2)
+
+
+def main():
+    commands_map = {'crawl_all': crawl_all, 'export': export}
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest='command')
+    crawlall_parser = subparsers.add_parser(
+        'crawl_all', help='Run all registered spiders')
+    import_parser = subparsers.add_parser(
+        'import', help='Import spiders from a json file')
+    import_parser.add_argument('file',
+                               help='A file with spider data in json format')
+    export_parser = subparsers.add_parser(
+        'export', help="Export all registered spiders' data as json")
+    args = parser.parse_args(sys.argv[1:])
+    if args.command:
+        commands_map[args.command]()
 
 
 if __name__ == "__main__":

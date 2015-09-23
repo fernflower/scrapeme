@@ -162,7 +162,7 @@ def _start_requests_vk(self):
                                       group_id=abs(self.owner_id),
                                       version=self.API_VERSION,
                                       format=self.FORMAT)
-                         for topic_id in self.boards_to_crawl]
+                         for topic_id in self.boards]
     urls = [('wall', scrape_wall_url)]
     urls.extend([('board', url) for url in scrape_board_urls])
     for (i, (type, url)) in enumerate(urls):
@@ -173,18 +173,29 @@ def _start_requests_vk(self):
             request = scrapy.Request(
                 url, dont_filter=True,
                 callback=self.parse_board,
-                meta={'topic_id': self.boards_to_crawl[i-1]})
+                meta={'topic_id': self.boards[i-1]})
         yield request
 
 
-def _common_attrs_dict(spider_name):
+def to_dict(cls, type):
+    res = {'type': type}
+    # all non-callables or system functions
+    spider_vars = [a for a in dir(cls) if cls.is_repr_param(a)]
+    for var in spider_vars:
+        res[var] = getattr(cls, var)
+    return res
+
+
+def _common_attrs_dict(spider_name, spider_type):
     return {'last_ts': property(fget=_get_last_ts, fset=_set_last_ts),
             'last_seen_filename': os.path.join(settings.SCRAPED_DIR,
                                                spider_name,
                                                settings.LAST_SEEN_FILENAME),
             'email': property(fget=_get_email, fset=_set_email),
             'email_filename': os.path.join(settings.SCRAPED_DIR, spider_name,
-                                           settings.EMAIL_BODY_FILENAME)}
+                                           settings.EMAIL_BODY_FILENAME),
+            'to_dict': classmethod(lambda x: to_dict(x, type=spider_type)),
+            'type': spider_type}
 
 
 def gen_spider_class(**kwargs):
@@ -193,11 +204,22 @@ def gen_spider_class(**kwargs):
     The class will have a default parse method.
     Besides a directory for spider data will be created.
     """
-    cls_attrs = _common_attrs_dict(kwargs.get('name'))
+    REQUIRED = ["name", "allowed_domains", "start_urls"]
+
+    @classmethod
+    def is_repr_param(cls, param):
+        """Used in serialization.
+
+        A method which tells if a parameter should appear in
+        to_dict method's output"""
+        return (param.endswith('_css') or param.endswith('_xpath') or
+                param in REQUIRED)
+    cls_attrs = _common_attrs_dict(kwargs.get('name'), 'site')
     cls_attrs.update({'parse': _parse, 'fetch_body': _fetch_body,
-                      'select': _select, 'process_date': _process_date})
+                      'select': _select, 'process_date': _process_date,
+                      'is_repr_param': is_repr_param})
     try:
-        for req_arg in ["name", "allowed_domains", "start_urls"]:
+        for req_arg in REQUIRED:
             cls_attrs[req_arg] = kwargs.pop(req_arg)
     except KeyError:
         raise exc.SpiderException(
@@ -211,17 +233,28 @@ def gen_vk_spider_class(**kwargs):
 
     Spider will scrape wall, owner_id argument is obligatory.
     """
-    cls_attrs = _common_attrs_dict(kwargs.get('name'))
+    REQUIRED = ["name", "owner_id"]
+
+    # FIXME generalize?
+    @classmethod
+    def is_repr_param(cls, param):
+        """Used in serialization.
+
+        A method which tells if a parameter should appear in
+        to_dict method's output"""
+        return (param == "boards" or param in REQUIRED)
+    cls_attrs = _common_attrs_dict(kwargs.get('name'), 'vk')
     cls_attrs.update({
         'API_URL': 'https://api.vk.com/method/%s?%s',
         'API_VERSION': '5.37',
         'FORMAT': 'json',
-        'boards_to_crawl': kwargs.get('boards') or [],
+        'boards': kwargs.get('boards') or [],
         'count': kwargs.get('count', 50),
         'offset': kwargs.get('offset', 0),
         'parse_wall': _parse_vk_wall,
         'parse_board': _parse_vk_board,
         'get_url': _get_vk_url,
+        'is_repr_param': is_repr_param,
         'start_requests': _start_requests_vk})
     try:
         for req_arg in ["owner_id", "name"]:
@@ -234,7 +267,7 @@ def gen_vk_spider_class(**kwargs):
 
 
 def create_vk_spider(name, owner_id, module, boards=None):
-    generated = gen_vk_spider_class(name=name, owner_id=owner_id)
+    generated = gen_vk_spider_class(name=name, owner_id=owner_id, boards=boards)
     # a nasty hack to make generated class discoverable by scrapy
     generated.__module__ = module
     return generated
