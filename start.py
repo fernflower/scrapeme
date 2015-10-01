@@ -4,17 +4,18 @@ import urllib
 import urllib2
 import urlparse
 
-from flask import Flask, render_template, render_template_string, request
+from flask import Flask, render_template, request, session
 import pysolr
 from scrapy import selector
 
 from postscraper import settings
 
 app = Flask(__name__)
+app.secret_key = settings.FLASK_SECRET_KEY
 VK_AUTH_URL = (("https://oauth.vk.com/authorize?client_id=%(app_id)s"
                 "&display=wap&redirect_uri=%(redirect_url)s"
                 "&scope=friends&response_type=token&v=5.37") %
-                {"app_id": settings.VK_APP_ID,
+               {"app_id": settings.VK_APP_ID,
                 "redirect_url": settings.VK_REDIRECT_URL})
 
 
@@ -36,7 +37,10 @@ def query_results():
 
 @app.route("/control")
 def control_panel():
-    return render_template('control_panel.html', auth_url=VK_AUTH_URL)
+    return render_template('control_panel.html',
+                           access_token=session.get('vk_access_token'),
+                           user_id=session.get('vk_user_id'),
+                           expires_in=session.get('vk_expires_in'))
 
 
 @app.route("/auth")
@@ -57,6 +61,8 @@ def vk_auth():
     resp = opener.open(login_url, urllib.urlencode(params))
     url_params = dict(p.split('=')
                       for p in urlparse.urlparse(resp.url).fragment.split('&'))
+    for key in url_params:
+        session['vk_' + key] = url_params[key]
     return render_template('control_panel.html', **url_params)
 
 
