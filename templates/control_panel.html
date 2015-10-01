@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block data %}
+    {% if access_token %}
+        <h4>Your access token is: {{access_token}}</h4>
+        <h4>Your user_id is: {{user_id}}</h4>
+        <h4>Token expires in: {{expires_in}}</h4>
+    {% else %}
+        <a href={{url_for('vk_auth')}}>Enter with VK</a>
+    {% endif %}
+{% endblock %}
+

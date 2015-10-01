@@ -33,6 +33,10 @@ MAIL_RECIPIENT_LIST = secret_settings.MY_MAIL_RECIPIENT_LIST
 QUERY = u"бас,контрабас,jazz,джаз,скрипка,аккордеон,кахон,французский"
 # max number of posts to output per source
 QUERY_ROWS = 100
+VK_APP_ID = 5090679
+VK_REDIRECT_URL = "https://oauth.vk.com/blank.html"
+VK_USER_LOGIN = secret_settings.MY_VK_USER_LOGIN
+VK_USER_PASSWORD = secret_settings.MY_VK_USER_PASSWORD
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
