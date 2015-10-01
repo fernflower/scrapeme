@@ -89,7 +89,7 @@ def crawl_all():
 
 
 def export(stream=sys.stdout):
-    json_list = [s.to_dict() for s in _find_spiders()]
+    json_list = [s.to_dict() for s in _find_spiders() if s.type == "vk"]
     json.dump(json_list, stream, separators=(',', ': '), indent=2)
 
 

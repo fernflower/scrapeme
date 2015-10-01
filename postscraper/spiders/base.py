@@ -2,9 +2,12 @@ import codecs
 from datetime import datetime
 import json
 import os
+import re
+import requests
 import urlparse
 
 import scrapy
+from scrapy import selector
 
 from postscraper import exc
 import postscraper.items
@@ -266,7 +269,18 @@ def gen_vk_spider_class(**kwargs):
     return type(cls_attrs['name'] + "Class", (scrapy.Spider, ), cls_attrs)
 
 
-def create_vk_spider(name, owner_id, module, boards=None):
+def create_vk_spider(name, module, boards=None, owner_id=None, url=None):
+    if not owner_id and not url:
+        raise exc.SpiderException("Either owner_id or url must be specified!")
+    if owner_id and url:
+        raise exc.SpiderException("Both owner_id and url given, choose one")
+    if url:
+        html = requests.get(url).text
+        xpath = ("descendant-or-self::a[@href and "
+                 "starts-with(@href, '/search')]/@href")
+        people_url = selector.Selector(text=html).xpath(xpath)[0].extract()
+        m = re.search('\[group\]=(\d+)', people_url)
+        owner_id = -1 * int(m.group(1))
     generated = gen_vk_spider_class(name=name, owner_id=owner_id, boards=boards)
     # a nasty hack to make generated class discoverable by scrapy
     generated.__module__ = module
