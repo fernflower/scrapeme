@@ -32,4 +32,10 @@ class Spider(SpiderCls):
         # musicforums stores date as %d-%m %H:%M (ex. 28-08 19:53)
         date_format = "%d-%m %H:%M"
         dt = datetime.datetime.strptime(date, date_format)
-        return dt.strftime(settings.DATE_FORMAT)
+        dt_with_year = datetime.datetime(year=datetime.datetime.now().year,
+                                         month=dt.month,
+                                         day=dt.day,
+                                         hour=dt.hour,
+                                         minute=dt.minute,
+                                         second=dt.second)
+        return dt_with_year.strftime(settings.DATE_FORMAT)
