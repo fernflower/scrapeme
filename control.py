@@ -74,6 +74,7 @@ def crawl_all():
     # set up the crawler and start to crawl
     # one spider at a time
     # FIXME find a way to use postscraper.settings
+    # login vk user
     runner = CrawlerRunner(settings=Settings(
         {'DOWNLOAD_DELAY': settings.DOWNLOAD_DELAY,
          'ITEM_PIPELINES': settings.ITEM_PIPELINES}))

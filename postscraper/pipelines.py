@@ -74,18 +74,18 @@ class SendMailPipeline(object):
             for c in ['/', ':', '?', '&']:
                 res = res.replace(c, '\\'+c)
             return res
-
-        if spider.last_ts is None:
-            query = u"%s AND source:%s" % (settings.QUERY, spider.name)
-        else:
-            # increment date by 1 second to hide last seen result
-            # FIXME how can we do it with a solr query?
-            inc_date = spider.last_ts + datetime.timedelta(0, 1)
-            query = ((u"%(query)s AND date:([%(date)s TO NOW]) "
-                     "AND source: %(source)s") %
-                     {'query': settings.QUERY,
-                      'date': utils.convert_date_to_solr_date(inc_date),
-                      'source': spider.name})
+        # increment date by 1 second to hide last seen result
+        # FIXME how can we do it with a solr query?
+        last_to_show = (datetime.datetime.now() -
+                        datetime.timedelta(days=settings.POSTS_TTL))
+        if not spider.last_ts:
+            spider.last_ts = last_to_show
+        inc_date = max(spider.last_ts + datetime.timedelta(0, 1), last_to_show)
+        query = ((u"%(query)s AND date:([%(date)s TO NOW]) "
+                    "AND source: %(source)s") %
+                    {'query': settings.QUERY,
+                    'date': utils.convert_date_to_solr_date(inc_date),
+                    'source': spider.name})
         items = self.solr.search(query, sort="date desc",
                                  rows=settings.QUERY_ROWS)
         # convert dates to human-readable non-solr format

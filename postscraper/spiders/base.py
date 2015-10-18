@@ -1,6 +1,7 @@
 import codecs
 from datetime import datetime
 import json
+import logging
 import os
 import re
 import requests
@@ -13,6 +14,8 @@ from postscraper import exc
 import postscraper.items
 from postscraper import settings
 from postscraper import utils
+
+LOG = logging.getLogger(__name__)
 
 
 def _fetch_body(self, response):
@@ -52,6 +55,8 @@ def _get_last_ts(self):
 def _set_last_ts(self, date):
     date_str = (utils.convert_date_to_str(date)
                 if isinstance(date, datetime) else date)
+    if not date_str:
+        return
     with open(self.last_seen_filename, 'wb') as f:
         f.write(date_str)
 
@@ -109,7 +114,16 @@ def _get_vk_url(cls, method, **kwargs):
 
 def _parse_vk_wall(self, response):
     """Deals with wall posts' json data received from VK API"""
+    if response.status != 200:
+        LOG.info("200 OK expected, got %s" % response.status)
+        raise exc.SpiderException("Response code not supported: %s" %
+                                  response.status)
     data = json.loads(response.body)
+    # FIXME code duplication
+    if "error" in data:
+        raise exc.SpiderException("%(name)s spider failed: %(reason)s" %
+                                  {"reason": data["error"]["error_msg"],
+                                   "name": self.name})
     posts_data = data["response"][1:]
     for post in posts_data:
         item = postscraper.items.PostItem()
@@ -125,7 +139,16 @@ def _parse_vk_wall(self, response):
 
 def _parse_vk_board(self, response):
     """Deals with board comments' json data received from VK API"""
+    if response.status != 200:
+        LOG.info("200 OK expected, got %s" % response.status)
+        raise exc.SpiderException("Response code not supported: %s" %
+                                  response.status)
     data = json.loads(response.body)
+    # FIXME code duplication
+    if "error" in data:
+        raise exc.SpiderException("%(name)s spider failed: %(reason)s" %
+                                  {"reason": data["error"]["error_msg"],
+                                   "name": self.name})
     count = data["response"]["comments"][0]
     topic_id = response.meta['topic_id']
 
@@ -150,21 +173,27 @@ def _parse_vk_board(self, response):
                                   topic_id=topic_id,
                                   group_id=abs(self.owner_id),
                                   api_version=self.API_VERSION,
-                                  format=self.FORMAT)
+                                  format=self.FORMAT,
+                                  access_token=self.access_token)
     yield scrapy.Request(fetch_last_100, callback=_process_comments)
 
 
 def _start_requests_vk(self):
-    scrape_wall_url = self.get_url(
-        'wall.get', count=self.count, owner_id=self.owner_id,
-        offset=self.offset, version=self.API_VERSION, format=self.FORMAT)
+    scrape_wall_url = self.get_url('wall.get',
+                                   count=self.count,
+                                   owner_id=self.owner_id,
+                                   offset=self.offset,
+                                   version=self.API_VERSION,
+                                   format=self.FORMAT,
+                                   access_token=self.access_token)
     scrape_board_urls = [self.get_url('board.getComments',
                                       count=1,
                                       offset=0,
                                       topic_id=topic_id,
                                       group_id=abs(self.owner_id),
                                       version=self.API_VERSION,
-                                      format=self.FORMAT)
+                                      format=self.FORMAT,
+                                      access_token=self.access_token)
                          for topic_id in self.boards]
     urls = [('wall', scrape_wall_url)]
     urls.extend([('board', url) for url in scrape_board_urls])
@@ -198,7 +227,9 @@ def _common_attrs_dict(spider_name, spider_type):
             'email_filename': os.path.join(settings.SCRAPED_DIR, spider_name,
                                            settings.EMAIL_BODY_FILENAME),
             'to_dict': classmethod(lambda x: to_dict(x, type=spider_type)),
-            'type': spider_type}
+            'type': spider_type,
+            'access_token': property(fget=lambda x:
+                                     os.environ.get('vk_access_token', ''))}
 
 
 def gen_spider_class(**kwargs):
@@ -236,6 +267,7 @@ def gen_vk_spider_class(**kwargs):
 
     Spider will scrape wall, owner_id argument is obligatory.
     """
+    utils.login_vk_user()
     REQUIRED = ["name", "owner_id"]
 
     # FIXME generalize?
