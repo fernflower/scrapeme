@@ -7,6 +7,7 @@ import urlparse
 
 from scrapy import selector
 
+from postscraper import exc
 from postscraper import settings
 
 
@@ -22,7 +23,7 @@ def convert_date_to_solr_date(date):
     return date.strftime(settings.SOLR_DATE_FORMAT)
 
 
-def authorize():
+def authorize(login, password):
     VK_AUTH_URL = (("https://oauth.vk.com/authorize?client_id=%(app_id)s"
                     "&display=wap&redirect_uri=%(redirect_url)s"
                     "&scope=friends&response_type=token&v=5.37") %
@@ -36,19 +37,21 @@ def authorize():
     opener = urllib2.build_opener(
         urllib2.HTTPCookieProcessor(cookielib.CookieJar()),
         urllib2.HTTPRedirectHandler())
-    resp = opener.open(VK_AUTH_URL).read()
-    sel = selector.Selector(text=resp)
+    resp1 = opener.open(VK_AUTH_URL)
+    sel = selector.Selector(text=resp1.read())
     login_url = sel.xpath(
         "descendant-or-self::form[@method='post']/@action")[0].extract()
-    params = {"email": settings.VK_USER_LOGIN,
-              "pass": settings.VK_USER_PASSWORD}
+    params = {"email": login, "pass": password}
     for s in sel.xpath("descendant-or-self::input[@type='hidden']"):
         name = s.xpath("./@name")[0].extract()
         value = s.xpath("./@value")[0].extract()
         params[name] = value
-    resp = opener.open(login_url, urllib.urlencode(params))
+    resp2 = opener.open(login_url, urllib.urlencode(params))
+    if 'access_token=' not in resp2.url:
+        # no access_token data -> failure
+        raise exc.VkLoginFailure("Check credentials")
     url_params = dict(p.split('=')
-                      for p in urlparse.urlparse(resp.url).fragment.split('&'))
+                      for p in urlparse.urlparse(resp2.url).fragment.split('&'))
     vk_url_params = {'vk_' + k: url_params[k] for k in url_params}
     for p in vk_url_params:
         os.environ[p] = str(vk_url_params[p])
@@ -69,5 +72,5 @@ def login_vk_user():
     login_data = ['vk_access_token', 'vk_expires_in', 'vk_user_id']
     # FIXME check for token validity, not just existance
     if not is_authorized_vk():
-        authorize()
+        authorize(settings.VK_USER_LOGIN, settings.VK_USER_PASSWORD)
     return {p: os.environ.get(p) for p in login_data}

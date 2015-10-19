@@ -1,9 +1,11 @@
 import datetime
+import subprocess
+import time
 
 from flask import Flask, Response, render_template, request
 import pysolr
 
-from postscraper import settings, utils
+from postscraper import exc, settings, utils
 
 app = Flask(__name__)
 app.secret_key = settings.FLASK_SECRET_KEY
@@ -37,8 +39,36 @@ def cleanup():
 
 @app.route("/control")
 def control_panel():
-    login_data = utils.login_vk_user()
+    login_data = utils.login_vk_user() if utils.is_authorized_vk() else {}
     return render_template('control_panel.html', **login_data)
+
+
+@app.route("/login", methods=['POST'])
+def enter_with_vk():
+    login = request.form.get('vk_login')
+    password = request.form.get('vk_pass')
+    try:
+        login_data = utils.authorize(login, password)
+        return render_template('control_panel.html', **login_data)
+    except exc.VkLoginFailure:
+        return Response("Unable to authorize, try again")
+
+
+@app.route("/crawlall")
+def launch_crawl():
+    def func():
+        # FIXME native call?
+        cmd = 'python control.py crawl_all'
+        # cmd = 'dmesg'
+        proc = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
+        lines = proc.stderr.readlines(64)
+        while lines != []:
+            time.sleep(0.1)
+            out = u"<br/>\n".join(lines)
+            lines = proc.stderr.readlines(64)
+            yield out
+
+    return Response(func(), mimetype='text/html; charset=utf-8')
 
 
 if __name__ == "__main__":

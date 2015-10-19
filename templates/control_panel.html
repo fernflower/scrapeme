@@ -1,10 +1,46 @@
 {% extends 'base.html' %}
 
 {% block data %}
+  {% if vk_user_id %}
     <h4>Your access token is: {{vk_access_token}}</h4>
     <h4>Your user_id is: {{vk_user_id}}</h4>
     <h4>Token expires in: {{vk_expires_in}}</h4>
+    <h3><a href={{url_for('launch_crawl')}}>Launch crawl</a></h3>
     <h3><a href={{url_for('query_results')}}>Search in DB</a></h3>
     <h3><a href={{url_for('cleanup')}}>Cleanup old records</a></h3>
+  {% else %}
+    <form class="form-horizontal" action={{url_for('enter_with_vk')}} method="post">
+        <fieldset>
+            <legend>Enter</legend>
+
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="vk_login">Login</label>
+                <div class="col-md-4">
+                    <input id="vk_login" name="vk_login" placeholder="" class="form-control input-md" type="text">
+
+                </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="vk_pass">Password</label>
+                <div class="col-md-4">
+                    <input id="vk_pass" name="vk_pass" type="password" class="form-control input-md" type="text">
+
+                </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="enter"></label>
+                <div class="col-md-4">
+                    <button id="enter" name="enter" class="btn btn-primary">enter</button>
+                </div>
+            </div>
+
+        </fieldset>
+    </form>
+  {% endif %}
 {% endblock %}
 
