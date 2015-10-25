@@ -2,9 +2,8 @@ import datetime
 import os
 import subprocess
 import time
-import urlparse
 
-from flask import Flask, Response, render_template, request, redirect
+from flask import Flask, Response, render_template, request, redirect, url_for
 import pysolr
 
 from postscraper import exc, settings, utils
@@ -59,12 +58,12 @@ def enter_with_vk():
 @app.route("/set_token", methods=['POST'])
 def set_token():
     token_str = request.form.get("data").lstrip('#')
-    url_params = dict(p.split('=') for p in token_str.split('&'))
-    return Response(token_str)
-    vk_url_params = {'vk_' + k: url_params[k] for k in url_params}
-    for p in vk_url_params:
-        os.environ[p] = str(vk_url_params[p])
-    return redirect("/control")
+    if 'access_token' in token_str:
+        url_params = dict(p.split('=') for p in token_str.split('&'))
+        vk_url_params = {'vk_' + k: url_params[k] for k in url_params}
+        for p in vk_url_params:
+            os.environ[p] = str(vk_url_params[p])
+    return redirect(url_for('control_panel'))
 
 
 @app.route("/oauth")
