@@ -10,6 +10,7 @@
     <h3><a href={{url_for('cleanup')}}>Cleanup old records</a></h3>
   {% else %}
     <h3><a href={{url_for('oauth_vk')}}>Enter with VK</a></h3>
+    <h3><a href="#void" onClick="$(function(){$.post('/set_token', {data: window.location.hash});})">Show HASH</a>
   {% endif %}
 {% endblock %}
 

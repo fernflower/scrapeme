@@ -1,6 +1,8 @@
 import datetime
+import os
 import subprocess
 import time
+import urlparse
 
 from flask import Flask, Response, render_template, request, redirect
 import pysolr
@@ -52,6 +54,17 @@ def enter_with_vk():
         return render_template('control_panel.html', **login_data)
     except exc.VkLoginFailure:
         return Response("Unable to authorize, try again")
+
+
+@app.route("/set_token", methods=['POST'])
+def set_token():
+    token_str = request.form.get("data").lstrip('#')
+    url_params = dict(p.split('=') for p in token_str.split('&'))
+    return Response(token_str)
+    vk_url_params = {'vk_' + k: url_params[k] for k in url_params}
+    for p in vk_url_params:
+        os.environ[p] = str(vk_url_params[p])
+    return redirect("/control")
 
 
 @app.route("/oauth")
