@@ -40,7 +40,9 @@ def cleanup():
 
 @app.route("/control")
 def control_panel():
-    login_data = utils.login_vk_user() if utils.is_authorized_vk() else {}
+    if not utils.is_authorized_vk():
+        return redirect(url_for("oauth_vk"))
+    login_data = utils.login_vk_user()
     return render_template('control_panel.html', **login_data)
 
 
@@ -57,18 +59,24 @@ def enter_with_vk():
 
 @app.route("/set_token", methods=['POST'])
 def set_token():
-    token_str = request.form.get("data").lstrip('#')
-    if 'access_token' in token_str:
-        url_params = dict(p.split('=') for p in token_str.split('&'))
-        vk_url_params = {'vk_' + k: url_params[k] for k in url_params}
-        for p in vk_url_params:
-            os.environ[p] = str(vk_url_params[p])
-    return redirect(url_for('control_panel'))
+    # XXX may be a bug: request.form.get(key, request.form[KEY]) - 2 also
+    # calculated
+    vk_url_params = {'vk_' + k.lstrip('#'): v for k, v in request.form.items()}
+    for p in vk_url_params:
+        os.environ[p] = str(vk_url_params[p])
+    # return render_template('control_panel.html', **vk_url_params)
+    # FIXME find out how to call control and reload page
+    return render_template('control_panel.html', **vk_url_params)
 
 
 @app.route("/oauth")
 def oauth_vk():
     return redirect(utils.VK_AUTH_URL)
+
+
+@app.route("/authorized")
+def login_success():
+    return render_template('authorized.html')
 
 
 @app.route("/crawlall")

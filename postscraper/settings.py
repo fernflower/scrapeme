@@ -37,7 +37,7 @@ QUERY_ROWS = 100
 # deleted)
 POSTS_TTL = 21
 VK_APP_ID = 5090679
-VK_REDIRECT_URL = "http://scraper.kreda.today/control"
+VK_REDIRECT_URL = "http://scraper.kreda.today/authorized"
 VK_USER_LOGIN = secret_settings.MY_VK_USER_LOGIN
 VK_USER_PASSWORD = secret_settings.MY_VK_USER_PASSWORD
 FLASK_SECRET_KEY = secret_settings.MY_FLASK_SECRET_KEY

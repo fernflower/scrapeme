@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+
+{% block data %}
+<h3><a href="#void" onClick="$(function(){$.post('/set_token', window.location.hash, function(){window.location.replace('/control')});})">Go to control panel</a>
+{% endblock %}
