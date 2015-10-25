@@ -11,6 +11,12 @@ from postscraper import exc
 from postscraper import settings
 
 
+VK_AUTH_URL = (("https://oauth.vk.com/authorize?client_id=%(app_id)s"
+                "&display=wap&redirect_uri=%(redirect_url)s"
+                "&scope=friends&response_type=token&v=5.37") %
+                {"app_id": settings.VK_APP_ID,
+                "redirect_url": settings.VK_REDIRECT_URL})
+
 def convert_to_datetime(date_str):
     return datetime.strptime(date_str, settings.DATE_FORMAT)
 
@@ -24,11 +30,6 @@ def convert_date_to_solr_date(date):
 
 
 def authorize(login, password):
-    VK_AUTH_URL = (("https://oauth.vk.com/authorize?client_id=%(app_id)s"
-                    "&display=wap&redirect_uri=%(redirect_url)s"
-                    "&scope=friends&response_type=token&v=5.37") %
-                   {"app_id": settings.VK_APP_ID,
-                    "redirect_url": settings.VK_REDIRECT_URL})
     """A method for vk user auth and access_token retrieval.
 
     After a token is aquired any read action with user group can be performed.

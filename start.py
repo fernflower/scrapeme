@@ -2,7 +2,7 @@ import datetime
 import subprocess
 import time
 
-from flask import Flask, Response, render_template, request
+from flask import Flask, Response, render_template, request, redirect
 import pysolr
 
 from postscraper import exc, settings, utils
@@ -52,6 +52,11 @@ def enter_with_vk():
         return render_template('control_panel.html', **login_data)
     except exc.VkLoginFailure:
         return Response("Unable to authorize, try again")
+
+
+@app.route("/oauth")
+def oauth_vk():
+    return redirect(utils.VK_AUTH_URL)
 
 
 @app.route("/crawlall")
