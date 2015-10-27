@@ -227,9 +227,7 @@ def _common_attrs_dict(spider_name, spider_type):
             'email_filename': os.path.join(settings.SCRAPED_DIR, spider_name,
                                            settings.EMAIL_BODY_FILENAME),
             'to_dict': classmethod(lambda x: to_dict(x, type=spider_type)),
-            'type': spider_type,
-            'access_token': property(fget=lambda x:
-                                     os.environ.get('vk_access_token', ''))}
+            'type': spider_type}
 
 
 def gen_spider_class(**kwargs):
@@ -268,7 +266,7 @@ def gen_vk_spider_class(**kwargs):
     Spider will scrape wall, owner_id argument is obligatory.
     """
     utils.login_vk_user()
-    REQUIRED = ["name", "owner_id"]
+    REQUIRED = ["name", "owner_id", "access_token"]
 
     # FIXME generalize?
     @classmethod
@@ -292,7 +290,7 @@ def gen_vk_spider_class(**kwargs):
         'is_repr_param': is_repr_param,
         'start_requests': _start_requests_vk})
     try:
-        for req_arg in ["owner_id", "name"]:
+        for req_arg in REQUIRED:
             cls_attrs[req_arg] = kwargs.pop(req_arg)
     except KeyError:
         raise exc.SpiderException(
@@ -313,7 +311,12 @@ def create_vk_spider(name, module, boards=None, owner_id=None, url=None):
         people_url = selector.Selector(text=html).xpath(xpath)[0].extract()
         m = re.search('\[group\]=(\d+)', people_url)
         owner_id = -1 * int(m.group(1))
-    generated = gen_vk_spider_class(name=name, owner_id=owner_id, boards=boards)
+    login_data = utils.login_vk_user()
+    generated = gen_vk_spider_class(name=name,
+                                    owner_id=owner_id,
+                                    boards=boards,
+                                    access_token=login_data.get(
+                                        'vk_access_token', ''))
     # a nasty hack to make generated class discoverable by scrapy
     generated.__module__ = module
     return generated

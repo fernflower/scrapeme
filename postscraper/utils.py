@@ -14,8 +14,9 @@ from postscraper import settings
 VK_AUTH_URL = (("https://oauth.vk.com/authorize?client_id=%(app_id)s"
                 "&display=wap&redirect_uri=%(redirect_url)s"
                 "&scope=friends&response_type=token&v=5.37") %
-                {"app_id": settings.VK_APP_ID,
+               {"app_id": settings.VK_APP_ID,
                 "redirect_url": settings.VK_REDIRECT_URL})
+
 
 def convert_to_datetime(date_str):
     return datetime.strptime(date_str, settings.DATE_FORMAT)
@@ -47,16 +48,28 @@ def authorize(login, password):
         name = s.xpath("./@name")[0].extract()
         value = s.xpath("./@value")[0].extract()
         params[name] = value
-    resp2 = opener.open(login_url, urllib.urlencode(params))
-    if 'access_token=' not in resp2.url:
-        # no access_token data -> failure
-        raise exc.VkLoginFailure("Check credentials")
-    url_params = dict(p.split('=')
-                      for p in urlparse.urlparse(resp2.url).fragment.split('&'))
-    vk_url_params = {'vk_' + k: url_params[k] for k in url_params}
-    for p in vk_url_params:
-        os.environ[p] = str(vk_url_params[p])
-    return vk_url_params
+    logins = 0
+
+    def _try_to_login():
+        resp2 = opener.open(login_url, urllib.urlencode(params))
+        if 'access_token=' not in resp2.url:
+            # no access_token data -> failure
+            raise exc.VkLoginFailure("Check credentials")
+        url_params = dict(p.split('=') for p in urlparse.urlparse(
+            resp2.url).fragment.split('&'))
+        vk_url_params = {'vk_' + k: url_params[k] for k in url_params}
+        for p in vk_url_params:
+            os.environ[p] = str(vk_url_params[p])
+        return vk_url_params
+
+    while logins < settings.VK_LOGIN_ATTEMPT:
+        try:
+            return _try_to_login()
+        except:
+            # import time
+            # time.sleep(settings.DOWNLOAD_DELAY)
+            logins += 1
+    raise exc.VkLoginFailure("%d login attempts, all failed" % logins)
 
 
 def is_authorized_vk():

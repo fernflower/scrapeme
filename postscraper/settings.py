@@ -41,6 +41,7 @@ VK_REDIRECT_URL = "http://scraper.kreda.today/authorized"
 VK_USER_LOGIN = secret_settings.MY_VK_USER_LOGIN
 VK_USER_PASSWORD = secret_settings.MY_VK_USER_PASSWORD
 FLASK_SECRET_KEY = secret_settings.MY_FLASK_SECRET_KEY
+VK_LOGIN_ATTEMPT = 5
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
