@@ -13,7 +13,7 @@ from postscraper import settings
 
 VK_AUTH_URL = (("https://oauth.vk.com/authorize?client_id=%(app_id)s"
                 "&display=wap&redirect_uri=%(redirect_url)s"
-                "&scope=friends&response_type=token&v=5.37") %
+                "&scope=friends,offline&response_type=token&v=5.37") %
                {"app_id": settings.VK_APP_ID,
                 "redirect_url": settings.VK_REDIRECT_URL})
 
