@@ -72,11 +72,6 @@ def authorize(login, password):
     raise exc.VkLoginFailure("%d login attempts, all failed" % logins)
 
 
-def is_authorized_vk():
-    params = ["vk_access_token", "vk_expires_in", "vk_user_id"]
-    return all(os.environ.get(p) for p in params)
-
-
 def login_vk_user():
     """Logins vk user using login/password from settings.
 
@@ -85,6 +80,12 @@ def login_vk_user():
     """
     login_data = ['vk_access_token', 'vk_expires_in', 'vk_user_id']
     # FIXME check for token validity, not just existance
-    if not is_authorized_vk():
+    if not all(os.environ.get(p) for p in login_data):
         authorize(settings.VK_USER_LOGIN, settings.VK_USER_PASSWORD)
     return {p: os.environ.get(p) for p in login_data}
+
+
+def get_access_token():
+    if not os.environ.get('vk_access_token'):
+        login_vk_user()
+    return os.environ.get('vk_access_token')

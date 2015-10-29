@@ -40,33 +40,11 @@ def cleanup():
 
 @app.route("/control")
 def control_panel():
-    if not utils.is_authorized_vk():
+    TOKEN_KEYS = ['access_token', 'user_id', 'expires_in']
+    if not all(request.values.get(x) is not None for x in TOKEN_KEYS):
         return redirect(url_for("oauth_vk"))
-    login_data = utils.login_vk_user()
+    login_data = {k: request.values.get(k) for k in TOKEN_KEYS}
     return render_template('control_panel.html', **login_data)
-
-
-@app.route("/login", methods=['POST'])
-def enter_with_vk():
-    login = request.form.get('vk_login')
-    password = request.form.get('vk_pass')
-    try:
-        login_data = utils.authorize(login, password)
-        return render_template('control_panel.html', **login_data)
-    except exc.VkLoginFailure:
-        return Response("Unable to authorize, try again")
-
-
-@app.route("/set_token", methods=['POST'])
-def set_token():
-    # XXX may be a bug: request.form.get(key, request.form[KEY]) - 2 also
-    # calculated
-    vk_url_params = {'vk_' + k.lstrip('#'): v for k, v in request.form.items()}
-    for p in vk_url_params:
-        os.environ[p] = str(vk_url_params[p])
-    # return render_template('control_panel.html', **vk_url_params)
-    # FIXME find out how to call control and reload page
-    return render_template('control_panel.html', **vk_url_params)
 
 
 @app.route("/oauth")
@@ -81,9 +59,10 @@ def login_success():
 
 @app.route("/crawlall")
 def launch_crawl():
+    token = request.args.get('access_token', '')
     def func():
         # FIXME native call?
-        cmd = 'python control.py crawl_all'
+        cmd = 'python control.py crawl_all --token %s' % token
         # cmd = 'dmesg'
         proc = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
         lines = proc.stderr.readlines(64)

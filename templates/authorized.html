@@ -1,5 +1,46 @@
 {% extends 'base.html' %}
 
 {% block data %}
-<h3><a href="#void" onClick="$(function(){$.post('/set_token', window.location.hash, function(){window.location.replace('/control')});})">Go to control panel</a>
+<form class="form-horizontal" action="{{url_for('control_panel')}}">
+    <fieldset>
+
+        <!-- Text input-->
+        <div class="form-group">
+            <label class="col-md-4 control-label" for="access_token">Token</label>  
+            <div class="col-md-4">
+                <input id="access_token" name="access_token" readonly="readonly" class="form-control input-md" type="text">
+            </div>
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+            <label class="col-md-4 control-label" for="user_id">User_id</label>  
+            <div class="col-md-4">
+                <input id="user_id" name="user_id" readonly="readonly" class="form-control input-md" type="text">
+
+            </div>
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+            <label class="col-md-4 control-label" for="expires_in">Expires in</label>  
+            <div class="col-md-4">
+                <input id="expires_in" name="expires_in" readonly="readonly" class="form-control input-md" type="text">
+
+            </div>
+        </div>
+
+        <!-- Button -->
+        <div class="form-group">
+            <label class="col-md-4 control-label" for="goto_button"></label>
+            <div class="col-md-4">
+                <button id="goto_button" name="goto_button" class="btn btn-primary">Go to control panel</button>
+            </div>
+        </div>
+
+    </fieldset>
+</form>
+{% endblock %}
+{% block extra_scipts %}
+<script src="/static/base.js"></script>
 {% endblock %}

@@ -13,6 +13,7 @@ from twisted import internet
 
 from postscraper import exc
 from postscraper import mymailsender
+from postscraper import utils
 from postscraper import settings
 
 
@@ -70,17 +71,21 @@ def _find_spiders():
     return res
 
 
-def crawl_all():
-    # set up the crawler and start to crawl
-    # one spider at a time
-    # FIXME find a way to use postscraper.settings
-    # login vk user
+def crawl_all(token=None):
+    if not token:
+        LOG.warn("No token passed, "
+                "acquiring one using login data from settings")
+        token = utils.get_access_token()
+    LOG.info("Access token: %s" % token)
     runner = CrawlerRunner(settings=Settings(
         {'DOWNLOAD_DELAY': settings.DOWNLOAD_DELAY,
          'ITEM_PIPELINES': settings.ITEM_PIPELINES}))
 
     dispatcher.connect(on_close, signal=signals.spider_closed)
     for spider_cls in _find_spiders():
+        # FIXME incapsulation vialation
+        # inject access_token to a VK spider
+        spider_cls.access_token = token
         RUNNING_CRAWLERS.append(spider_cls)
         runner.crawl(spider_cls)
     d = runner.join()
@@ -120,19 +125,22 @@ def import_spiders(filename):
 
 
 def main():
-    commands_map = {'crawl_all': (crawl_all, ), 'export': (export, ),
+    commands_map = {'crawl_all': (crawl_all, 'token'), 'export': (export, ),
                     'import': (import_spiders, 'file')}
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='command')
     crawlall_parser = subparsers.add_parser(
         'crawl_all', help='Run all registered spiders')
+
+    crawlall_parser.add_argument('--token',
+                                 help='Access token for private VK info')
     import_parser = subparsers.add_parser(
         'import', help='Import spiders from a json file')
     import_parser.add_argument('file',
                                help='A file with spider data in json format')
     export_parser = subparsers.add_parser(
         'export', help="Export all registered spiders' data as json")
-    args = parser.parse_args(sys.argv[1:])
+    args = parser.parse_args()
     if args.command:
         func_data = commands_map[args.command]
         if len(func_data) == 1:

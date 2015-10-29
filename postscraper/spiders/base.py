@@ -265,7 +265,6 @@ def gen_vk_spider_class(**kwargs):
 
     Spider will scrape wall, owner_id argument is obligatory.
     """
-    utils.login_vk_user()
     REQUIRED = ["name", "owner_id", "access_token"]
 
     # FIXME generalize?
@@ -299,7 +298,8 @@ def gen_vk_spider_class(**kwargs):
     return type(cls_attrs['name'] + "Class", (scrapy.Spider, ), cls_attrs)
 
 
-def create_vk_spider(name, module, boards=None, owner_id=None, url=None):
+def create_vk_spider(name, module, boards=None, owner_id=None, url=None,
+                     access_token=None):
     if not owner_id and not url:
         raise exc.SpiderException("Either owner_id or url must be specified!")
     if owner_id and url:
@@ -311,12 +311,12 @@ def create_vk_spider(name, module, boards=None, owner_id=None, url=None):
         people_url = selector.Selector(text=html).xpath(xpath)[0].extract()
         m = re.search('\[group\]=(\d+)', people_url)
         owner_id = -1 * int(m.group(1))
-    login_data = utils.login_vk_user()
-    generated = gen_vk_spider_class(name=name,
-                                    owner_id=owner_id,
-                                    boards=boards,
-                                    access_token=login_data.get(
-                                        'vk_access_token', ''))
+    # XXX call to utils.get_access_token left only for convenient
+    # scrapy crawl spider-name calls.
+    # FIXME change to calls from control.py one day
+    access_token = access_token or utils.get_access_token()
+    generated = gen_vk_spider_class(
+        name=name, owner_id=owner_id, boards=boards, access_token=access_token)
     # a nasty hack to make generated class discoverable by scrapy
     generated.__module__ = module
     return generated
