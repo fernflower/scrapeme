@@ -4,3 +4,7 @@ class SpiderException(Exception):
 
 class VkLoginFailure(Exception):
     pass
+
+
+class GenerateSpiderError(SpiderException):
+    pass

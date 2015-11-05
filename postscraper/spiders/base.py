@@ -274,7 +274,7 @@ def gen_vk_spider_class(**kwargs):
 
         A method which tells if a parameter should appear in
         to_dict method's output"""
-        return (param == "boards" or param in REQUIRED)
+        return param in ["name", "owner_id", "boards"]
     cls_attrs = _common_attrs_dict(kwargs.get('name'), 'vk')
     cls_attrs.update({
         'API_URL': 'https://api.vk.com/method/%s?%s',
