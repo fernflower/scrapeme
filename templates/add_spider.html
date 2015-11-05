@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block data %}
+<form class="form-horizontal">
+    <fieldset>
+
+        <!-- Form Name -->
+        <legend>Create VK Spider</legend>
+
+        <!-- Text input-->
+        <div class="form-group">
+            <label class="col-md-4 control-label" for="vk_group_url">vk group url</label>  
+            <div class="col-md-4">
+                <input id="vk_group_url" name="vk_group_url" placeholder="" class="form-control input-md" required="" type="text">
+
+            </div>
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+            <label class="col-md-4 control-label" for="spider_name">spider name</label>  
+            <div class="col-md-4">
+                <input id="spider_name" name="spider_name" placeholder="" class="form-control input-md" required="" type="text">
+
+            </div>
+        </div>
+
+        <!-- Appended Input-->
+        <div class="form-group">
+            <label class="col-md-4 control-label" for="boards">board urls</label>
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input id="boards" name="boards" class="form-control" placeholder="" type="text">
+                    <span class="input-group-addon">add</span>
+                </div>
+
+            </div>
+        </div>
+        <!-- Button -->
+        <div class="form-group">
+            <label class="col-md-4 control-label" for="singlebutton"></label>
+            <div class="col-md-4">
+                <button id="singlebutton" name="singlebutton" class="btn btn-primary">create</button>
+            </div>
+        </div>
+
+    </fieldset>
+</form>
+
+{% endblock %}

@@ -1,12 +1,11 @@
 import datetime
-import os
 import subprocess
 import time
 
 from flask import Flask, Response, render_template, request, redirect, url_for
 import pysolr
 
-from postscraper import exc, settings, utils
+from postscraper import settings, utils
 
 app = Flask(__name__)
 app.secret_key = settings.FLASK_SECRET_KEY
@@ -60,6 +59,7 @@ def login_success():
 @app.route("/crawlall")
 def launch_crawl():
     token = request.args.get('access_token', '')
+
     def func():
         # FIXME native call?
         cmd = 'python control.py crawl_all --token %s' % token
@@ -73,6 +73,12 @@ def launch_crawl():
             yield out
 
     return Response(func(), mimetype='text/html; charset=utf-8')
+
+
+@app.route("/add")
+def add_spider_form():
+    token = request.args.get('access_token', '')
+    return render_template('add_spider.html', token=token)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@
     <h4>Your user_id is: {{user_id}}</h4>
     <h4>Token expires in: {{expires_in}}</h4>
     <h3><a href={{url_for('launch_crawl', access_token=access_token)}}>Launch crawl</a></h3>
+    <h3><a href={{url_for('add_spider_form', access_token=access_token)}}>Add Spider</a></h3>
     <h3><a href={{url_for('query_results')}}>Search in DB</a></h3>
     <h3><a href={{url_for('cleanup')}}>Cleanup old records</a></h3>
   {% else %}
