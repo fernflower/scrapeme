@@ -2,6 +2,7 @@ import datetime
 import subprocess
 import time
 
+import flask
 from flask import Flask, Response, render_template, request, redirect, url_for
 import pysolr
 
@@ -75,10 +76,28 @@ def launch_crawl():
     return Response(func(), mimetype='text/html; charset=utf-8')
 
 
-@app.route("/add")
+@app.route("/addform")
 def add_spider_form():
     token = request.args.get('access_token', '')
     return render_template('add_spider.html', token=token)
+
+
+@app.route("/getownerid", methods=['POST'])
+def get_owner_id():
+    token = request.form.get('access_token', '')
+    url = request.form.get('url')
+    if not url or not token:
+        return {}
+    owner_id = utils.get_vk_owner_id(url, token)
+
+    return flask.jsonify(**{'owner_id': owner_id,
+                            'access_token': token,
+                            'url': url})
+
+
+@app.route("/add", methods=['POST'])
+def process_add_spider():
+    return flask.jsonify(**{'status': 'success'})
 
 
 if __name__ == "__main__":

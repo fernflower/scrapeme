@@ -4,11 +4,9 @@ import json
 import logging
 import os
 import re
-import requests
 import urlparse
 
 import scrapy
-from scrapy import selector
 
 from postscraper import exc
 import postscraper.items
@@ -306,13 +304,6 @@ def create_vk_spider(name, module, boards=None, owner_id=None, url=None,
         raise exc.SpiderException("Both owner_id and url given, choose one")
     if url:
         raise exc.SpiderException("Url passing not supported yet")
-        # XXX FIXME won't work if access_token not passed!!!!
-        # html = requests.get(url).text
-        # xpath = ("descendant-or-self::a[@href and "
-        #          "starts-with(@href, '/search')]/@href")
-        # people_url = selector.Selector(text=html).xpath(xpath)[0].extract()
-        # m = re.search('\[group\]=(\d+)', people_url)
-        # owner_id = -1 * int(m.group(1))
     # XXX call to utils.get_access_token left only for convenient
     # scrapy crawl spider-name calls.
     # FIXME change to calls from control.py one day

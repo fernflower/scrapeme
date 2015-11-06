@@ -1,6 +1,8 @@
 import cookielib
 from datetime import datetime
 import os
+import re
+import requests
 import urllib
 import urllib2
 import urlparse
@@ -89,3 +91,13 @@ def get_access_token():
     if not os.environ.get('vk_access_token'):
         login_vk_user()
     return os.environ.get('vk_access_token')
+
+
+def get_vk_owner_id(url, access_token):
+    group_url = url + '?access_token=%s' % access_token
+    html = requests.get(group_url).text
+    xpath = ("descendant-or-self::a[@href and "
+             "starts-with(@href, '/search?c[section]=people&c[group]')]/@href")
+    people_url = selector.Selector(text=html).xpath(xpath)[0].extract()
+    m = re.search('\[group\]=(\d+)', people_url)
+    return -1 * int(m.group(1))
