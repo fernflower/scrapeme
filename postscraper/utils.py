@@ -1,5 +1,6 @@
 import cookielib
 from datetime import datetime
+import json
 import os
 import re
 import requests
@@ -18,6 +19,10 @@ VK_AUTH_URL = (("https://oauth.vk.com/authorize?client_id=%(app_id)s"
                 "&scope=friends,offline&response_type=token&v=5.37") %
                {"app_id": settings.VK_APP_ID,
                 "redirect_url": settings.VK_REDIRECT_URL})
+
+API_URL_WALL = 'https://api.vk.com/method/wall.get?%s'
+API_URL_BOARD = 'https://api.vk.com/method/board.getComments?%s'
+API_VERSION = '5.37'
 
 
 def convert_to_datetime(date_str):
@@ -98,6 +103,42 @@ def get_vk_owner_id(url, access_token):
     html = requests.get(group_url).text
     xpath = ("descendant-or-self::a[@href and "
              "starts-with(@href, '/search?c[section]=people&c[group]')]/@href")
-    people_url = selector.Selector(text=html).xpath(xpath)[0].extract()
+    # if no such url is found then most likely you have no access to this group
+    people_group_urls = selector.Selector(text=html).xpath(xpath)
+    if len(people_group_urls) == 0:
+        raise exc.VkAccessError(group=url)
+    people_url = people_group_urls[0].extract()
     m = re.search('\[group\]=(\d+)', people_url)
     return -1 * int(m.group(1))
+
+
+def build_url(url_base, **kwargs):
+    """Builds a url to retrieve data from VK
+
+    Arguments from **kwargs will be passed in form
+    key1=value1&key2=value2 ...
+    """
+    return url_base % "&".join(["%s=%s" % (k, v) for (k, v) in kwargs.items()])
+
+
+def check_vk_access(url, access_token, raise_exc=True):
+    """Checks that this token is valid for data retrieval.
+
+    Performs a wall.get request (1 post).
+    Raises VkAccessError if fails and raise_exc.
+    If wall data has been successfully retrieved, returns group's owner_id..
+    """
+    group_id = get_vk_owner_id(url=url, access_token=access_token)
+    scrape_wall_url = build_url(API_URL_WALL,
+                                count=1,
+                                owner_id=group_id,
+                                version=API_VERSION,
+                                format='json',
+                                access_token=access_token)
+    data = json.loads(requests.get(scrape_wall_url).text)
+    # FIXME code duplication, see postscraper.spiders.base
+    if "error" in data:
+        if raise_exc:
+            raise exc.VkAccessError(group=group_id)
+        return None
+    return group_id

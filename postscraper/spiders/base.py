@@ -3,7 +3,6 @@ from datetime import datetime
 import json
 import logging
 import os
-import re
 import urlparse
 
 import scrapy
@@ -100,16 +99,6 @@ def _create_spider_dir(name):
 # below will be typical VK Spider methods
 
 
-def _get_vk_url(cls, method, **kwargs):
-    """Builds a url to retrieve data from VK
-
-    Arguments from **kwargs will be passed in form
-    key1=value1&key2=value2 ...
-    """
-    return cls.API_URL % (method, "&".join(["%s=%s" % (k, v)
-                                           for (k, v) in kwargs.items()]))
-
-
 def _parse_vk_wall(self, response):
     """Deals with wall posts' json data received from VK API"""
     if response.status != 200:
@@ -165,33 +154,33 @@ def _parse_vk_board(self, response):
             yield item
 
     # FIXME last 100 comments per request is VK API limitation
-    fetch_last_100 = self.get_url('board.getComments',
-                                  count=100,
-                                  offset=max(count-100, 0),
-                                  topic_id=topic_id,
-                                  group_id=abs(self.owner_id),
-                                  api_version=self.API_VERSION,
-                                  format=self.FORMAT,
-                                  access_token=self.access_token)
+    fetch_last_100 = utils.build_url(utils.API_URL_BOARD,
+                                     count=100,
+                                     offset=max(count-100, 0),
+                                     topic_id=topic_id,
+                                     group_id=abs(self.owner_id),
+                                     api_version=utils.API_VERSION,
+                                     format='json',
+                                     access_token=self.access_token)
     yield scrapy.Request(fetch_last_100, callback=_process_comments)
 
 
 def _start_requests_vk(self):
-    scrape_wall_url = self.get_url('wall.get',
-                                   count=self.count,
-                                   owner_id=self.owner_id,
-                                   offset=self.offset,
-                                   version=self.API_VERSION,
-                                   format=self.FORMAT,
-                                   access_token=self.access_token)
-    scrape_board_urls = [self.get_url('board.getComments',
-                                      count=1,
-                                      offset=0,
-                                      topic_id=topic_id,
-                                      group_id=abs(self.owner_id),
-                                      version=self.API_VERSION,
-                                      format=self.FORMAT,
+    scrape_wall_url = utils.build_url(utils.API_URL_WALL,
+                                      count=self.count,
+                                      owner_id=self.owner_id,
+                                      offset=self.offset,
+                                      version=utils.API_VERSION,
+                                      format='json',
                                       access_token=self.access_token)
+    scrape_board_urls = [utils.build_url(utils.API_URL_BOARD,
+                                         count=1,
+                                         offset=0,
+                                         topic_id=topic_id,
+                                         group_id=abs(self.owner_id),
+                                         version=utils.API_VERSION,
+                                         format='json',
+                                         access_token=self.access_token)
                          for topic_id in self.boards]
     urls = [('wall', scrape_wall_url)]
     urls.extend([('board', url) for url in scrape_board_urls])
@@ -275,15 +264,11 @@ def gen_vk_spider_class(**kwargs):
         return param in ["name", "owner_id", "boards"]
     cls_attrs = _common_attrs_dict(kwargs.get('name'), 'vk')
     cls_attrs.update({
-        'API_URL': 'https://api.vk.com/method/%s?%s',
-        'API_VERSION': '5.37',
-        'FORMAT': 'json',
         'boards': kwargs.get('boards') or [],
         'count': kwargs.get('count', 50),
         'offset': kwargs.get('offset', 0),
         'parse_wall': _parse_vk_wall,
         'parse_board': _parse_vk_board,
-        'get_url': _get_vk_url,
         'is_repr_param': is_repr_param,
         'start_requests': _start_requests_vk})
     try:

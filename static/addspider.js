@@ -1,13 +1,30 @@
-function get_owner_id() {
+function on_access_ok() {
+    $('#add_0').show();
+    $('#board_0').prop('disabled', false);
+    $('#spider_name').prop('disabled', false);
+    $('#create_spider').prop('disabled', false);
+    var url = $('#vk_group_url').val();
+    var url_arr = url.split('/').filter(function (x) {return x != ""; });
+    // set spider name equal to the last section of vk group url
+    $("#spider_name").val(url_arr[url_arr.length - 1]);
+};
+
+function check_access() {
     var url = $('#vk_group_url').val();
     if (url == "") {
         return null; 
     };
-    var url_arr = url.split('/').filter(function (x) {return x != ""; });
     $.post("/getownerid", {'access_token': $('#access_token').val(), 'url': $('#vk_group_url').val()}, 
-            function (data) {$('#owner_id_value').text(data['owner_id'])});
-    // set spider name
-    $("#spider_name").val(url_arr[url_arr.length - 1]);
+            function (data) {
+                if (data['status'] == 'success') {
+                    $('#owner_id_value').text(data['owner_id']);
+                    $('#group_url_div').removeClass('error');
+                    on_access_ok();
+                } else {
+                    $('#owner_id_value').text(data['message']);
+                    $('#group_url_div').addClass('error');
+                };
+            });
 };
 
 

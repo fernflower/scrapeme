@@ -9,6 +9,7 @@ import pysolr
 from scrapy.utils.log import configure_logging
 
 from postscraper import autogenerate
+from postscraper import exc
 from postscraper import settings
 from postscraper import utils
 
@@ -95,10 +96,13 @@ def get_owner_id():
     url = request.form.get('url')
     if not url or not token:
         return {}
-    owner_id = utils.get_vk_owner_id(url, token)
+    try:
+        owner_id = utils.check_vk_access(url=url, access_token=token)
+    except exc.VkAccessError as e:
+        return flask.jsonify(**{'status': 'fail', 'message': e.message})
 
     return flask.jsonify(**{'owner_id': owner_id, 'access_token': token,
-                            'url': url})
+                            'url': url, 'status': 'success'})
 
 
 @app.route("/add", methods=['POST'])

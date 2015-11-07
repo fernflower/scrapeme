@@ -17,13 +17,13 @@
         </div>
 
         <!-- VK group url -->
-        <div class="form-group">
+        <div class="form-group" id="group_url_div">
             <label class="col-md-2 control-label" for="vk_group_url">vk group url</label>  
             <div class="col-md-6">
                 <input id="vk_group_url" name="vk_group_url" placeholder="" class="form-control input-md" required="" type="text"/>
                 <span class="help-block" id="owner_id_value"></span>
                 <span class="input-group-btn">
-                    <a href="#void" id="get_owner_id_button" class="btn btn-default" onClick="get_owner_id()">Check Access</a>
+                    <a href="#void" id="get_owner_id_button" class="btn btn-default" onClick="check_access()">Check Access</a>
                 </span>
             </div>
         </div>
@@ -32,7 +32,7 @@
         <div class="form-group">
             <label class="col-md-2 control-label" for="spider_name">spider name</label>  
             <div class="col-md-6">
-                <input id="spider_name" name="spider_name" placeholder="" class="form-control input-md" required="" type="text">
+                <input id="spider_name" name="spider_name" placeholder="" class="form-control input-md" disabled="" required="" type="text">
 
             </div>
         </div>
@@ -41,8 +41,8 @@
         <div class="form-group">
             <label class="col-md-2 control-label" for="boards_group">board urls (optional)</label>
             <div class="col-md-6 input_fields_wrap" id="boards_group">
-                <a href="#void" id="add_0" class="add_field_button">Add board url</a>
-                <div><input class="form-control input-md" type="text" name="board_url[]"></div>
+                <a href="#void" id="add_0" class="add_field_button" style="display:none">Add board url</a>
+                <div><input class="form-control input-md" type="text" name="board_url[]" id="board_0" disabled=""></div>
             </div>
         </div>
 
@@ -52,7 +52,7 @@
         <div class="form-group">
             <label class="col-md-4 control-label" for="singlebutton"></label>
             <div class="col-md-4">
-                <button id="singlebutton" name="singlebutton" class="btn btn-primary">create</button>
+                <button id="create_spider" name="singlebutton" class="btn btn-primary" disabled="">create</button>
             </div>
         </div>
 
