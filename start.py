@@ -1,15 +1,22 @@
 import datetime
+import logging
 import subprocess
 import time
 
 import flask
 from flask import Flask, Response, render_template, request, redirect, url_for
 import pysolr
+from scrapy.utils.log import configure_logging
 
-from postscraper import settings, utils
+from postscraper import autogenerate
+from postscraper import settings
+from postscraper import utils
 
 app = Flask(__name__)
 app.secret_key = settings.FLASK_SECRET_KEY
+
+configure_logging()
+LOG = logging.getLogger(__name__)
 
 
 @app.route("/results")
@@ -90,14 +97,28 @@ def get_owner_id():
         return {}
     owner_id = utils.get_vk_owner_id(url, token)
 
-    return flask.jsonify(**{'owner_id': owner_id,
-                            'access_token': token,
+    return flask.jsonify(**{'owner_id': owner_id, 'access_token': token,
                             'url': url})
 
 
 @app.route("/add", methods=['POST'])
 def process_add_spider():
-    return flask.jsonify(**{'status': 'success'})
+    token = request.form.get('access_token')
+    url = request.form.get('vk_group_url')
+    spider_name = request.form.get('spider_name')
+    owner_id = utils.get_vk_owner_id(url, token)
+    board_urls = request.form.getlist('board_url[]')
+    # FIXME XXX not the best way to acquire board number
+    group_boards = [int(x.split('_')[-1]) for x in board_urls
+                    if 'vk.com/topic%d' % owner_id in x]
+    # leave those that refer to the group
+    if len(group_boards) != len(board_urls):
+        LOG.warn("Not all board_urls refer to the VK group,"
+                 " invalid will be left out.")
+    spider_json = autogenerate.add_user_spider_json(
+        {'type': 'vk', 'owner_id': owner_id, 'boards': group_boards,
+         'name': spider_name})
+    return flask.jsonify(**spider_json)
 
 
 if __name__ == "__main__":

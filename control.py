@@ -132,7 +132,8 @@ def auto(filename, write=False):
         LOG.warn("No file with user spiders '%s' found" % filename)
         return []
     with open(filename) as f:
-        spiders_data = json.load(f)
+        data = f.read().strip().split(settings.SPIDER_SEPARATOR)
+        spiders_data = [json.loads(s) for s in data]
     if write:
         raise NotImplemented("Write func not implemented yet")
     spiders = [autogenerate.gen_spider(
