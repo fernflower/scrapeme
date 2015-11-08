@@ -2,7 +2,6 @@ import cookielib
 from datetime import datetime
 import json
 import os
-import re
 import requests
 import urllib
 import urllib2
@@ -22,6 +21,7 @@ VK_AUTH_URL = (("https://oauth.vk.com/authorize?client_id=%(app_id)s"
 
 API_URL_WALL = 'https://api.vk.com/method/wall.get?%s'
 API_URL_BOARD = 'https://api.vk.com/method/board.getComments?%s'
+API_URL_GROUP_ID = 'https://api.vk.com/method/groups.getById?%s'
 API_VERSION = '5.37'
 
 
@@ -98,18 +98,15 @@ def get_access_token():
     return os.environ.get('vk_access_token')
 
 
-def get_vk_owner_id(url, access_token):
-    group_url = url + '?access_token=%s' % access_token
-    html = requests.get(group_url).text
-    xpath = ("descendant-or-self::a[@href and "
-             "starts-with(@href, '/search?c[section]=people&c[group]')]/@href")
-    # if no such url is found then most likely you have no access to this group
-    people_group_urls = selector.Selector(text=html).xpath(xpath)
-    if len(people_group_urls) == 0:
-        raise exc.VkAccessError(group=url)
-    people_url = people_group_urls[0].extract()
-    m = re.search('\[group\]=(\d+)', people_url)
-    return -1 * int(m.group(1))
+def get_vk_owner_id(url):
+    group_name = urlparse.urlparse(url).path.lstrip('/')
+    group_url = build_url(API_URL_GROUP_ID, group_id=group_name)
+    response = requests.get(group_url).text
+    data = json.loads(response)
+    # FIXME code duplication, see postscraper.spiders.base
+    if "error" in data:
+        raise exc.VkAccessError(group=group_name)
+    return -1 * data['response'][0]['gid']
 
 
 def build_url(url_base, **kwargs):
@@ -128,7 +125,7 @@ def check_vk_access(url, access_token, raise_exc=True):
     Raises VkAccessError if fails and raise_exc.
     If wall data has been successfully retrieved, returns group's owner_id..
     """
-    group_id = get_vk_owner_id(url=url, access_token=access_token)
+    group_id = get_vk_owner_id(url=url)
     scrape_wall_url = build_url(API_URL_WALL,
                                 count=1,
                                 owner_id=group_id,

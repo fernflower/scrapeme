@@ -107,10 +107,9 @@ def get_owner_id():
 
 @app.route("/add", methods=['POST'])
 def process_add_spider():
-    token = request.form.get('access_token')
     url = request.form.get('vk_group_url')
     spider_name = request.form.get('spider_name')
-    owner_id = utils.get_vk_owner_id(url, token)
+    owner_id = utils.get_vk_owner_id(url)
     board_urls = request.form.getlist('board_url[]')
     # FIXME XXX not the best way to acquire board number
     group_boards = [int(x.split('_')[-1]) for x in board_urls
