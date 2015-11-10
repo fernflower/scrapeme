@@ -12,6 +12,7 @@ from postscraper import autogenerate
 from postscraper import exc
 from postscraper import settings
 from postscraper import utils
+from postscraper import spider_utils
 
 app = Flask(__name__)
 app.secret_key = settings.FLASK_SECRET_KEY
@@ -107,20 +108,38 @@ def get_owner_id():
 
 @app.route("/add", methods=['POST'])
 def process_add_spider():
-    url = request.form.get('vk_group_url')
-    spider_name = request.form.get('spider_name')
-    owner_id = utils.get_vk_owner_id(url)
-    board_urls = request.form.getlist('board_url[]')
-    # FIXME XXX not the best way to acquire board number
-    group_boards = [int(x.split('_')[-1]) for x in board_urls
-                    if 'vk.com/topic%d' % owner_id in x]
-    # leave those that refer to the group
-    if len(group_boards) != len(board_urls):
-        LOG.warn("Not all board_urls refer to the VK group,"
-                 " invalid will be left out.")
-    spider_json = autogenerate.add_user_spider_json(
-        {'type': 'vk', 'owner_id': owner_id, 'boards': group_boards,
-         'name': spider_name})
+    try:
+        url = request.form.get('vk_group_url')
+        spider_name = request.form.get('spider_name')
+        owner_id = utils.get_vk_owner_id(url)
+        board_urls = request.form.getlist('board_url[]')
+        # FIXME XXX not the best way to acquire board number
+        group_boards = [int(x.split('_')[-1]) for x in board_urls
+                        if 'vk.com/topic%d' % owner_id in x]
+        # if spider with this name or url already exists -> raise an error
+        error = None
+        if spider_utils.find_spider(name=spider_name, type='vk'):
+            error = {'status': 'fail',
+                     'error': ('A spider with the name %s already exists' %
+                               spider_name)}
+        if spider_utils.find_spider(owner_id=owner_id, type='vk'):
+            # FIXME make it editable for the user
+            error = {'status': 'fail',
+                     'error': 'A spider for group %s already exists' % owner_id}
+        if error:
+            return flask.jsonify(**error)
+
+        # leave those urls that refer to the group
+        if len(group_boards) != len(board_urls):
+            LOG.warn("Not all board_urls refer to the VK group,"
+                     " invalid will be left out.")
+        spider_json = autogenerate.add_user_spider_json(
+            {'type': 'vk', 'owner_id': owner_id, 'boards': group_boards,
+             'name': spider_name})
+    except exc.VkSpiderException as e:
+        error = {'status': 'fail', 'error': e.message}
+        return flask.jsonify(**error)
+
     return flask.jsonify(**spider_json)
 
 
