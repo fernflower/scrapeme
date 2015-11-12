@@ -25,6 +25,11 @@ LOG = logging.getLogger(__name__)
 def query_results():
     # if nothing selected - output all results
     query = request.args.get('q', '')
+    sources = request.args.getlist('source')
+    if len(sources) > 0:
+        filter_sources = 'source:(%s)' % ' '.join(sources)
+        query = (filter_sources if query.strip() == ''
+                 else query + ' AND ' + filter_sources)
     # FIXME some query preprocessing may be needed
     solr = pysolr.Solr(settings.SOLR_URL, timeout=settings.SOLR_TIMEOUT)
     items = solr.search(query, sort="date desc", rows=settings.QUERY_ROWS)
@@ -34,7 +39,9 @@ def query_results():
         dt = datetime.datetime.strptime(item['date'],
                                         settings.SOLR_DATE_FORMAT)
         item['date'] = dt.strftime(settings.DATE_FORMAT)
-    return render_template('show_items.html', items=items_out, query=query)
+    spiders = [s.name for s in spider_utils.find_spiders()]
+    return render_template('show_items.html', items=items_out,
+                           query=query, spiders=spiders)
 
 
 @app.route("/cleanup")
