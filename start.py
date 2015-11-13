@@ -25,6 +25,7 @@ LOG = logging.getLogger(__name__)
 def query_results():
     # if nothing selected - output all results
     query = request.args.get('q', '')
+    token = request.args.get('access_token', '')
     sources = request.args.getlist('source')
     if len(sources) > 0:
         filter_sources = 'source:(%s)' % ' '.join(sources)
@@ -41,7 +42,7 @@ def query_results():
         item['date'] = dt.strftime(settings.DATE_FORMAT)
     spiders = [s.name for s in spider_utils.find_spiders()]
     return render_template('show_items.html', items=items_out,
-                           query=query, spiders=spiders)
+                           query=query, spiders=spiders, access_token=token)
 
 
 @app.route("/cleanup")
