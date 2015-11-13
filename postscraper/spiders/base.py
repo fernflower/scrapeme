@@ -114,13 +114,28 @@ def _parse_vk_wall(self, response):
     posts_data = data["response"][1:]
     for post in posts_data:
         item = postscraper.items.PostItem()
+        if post['text'] == '':
+            # a repost of some kind
+            try:
+                item['text'] = ("%(title)s\n%(description)s" % {
+                    'description': post['attachment']['link']['description'],
+                    'title': post['attachment']['link']['title']})
+                item['link'] = post['attachment']['link']['url']
+            except (KeyError, ValueError):
+                continue
+        else:
+            # a native post
+            item['text'] = post['text']
+            item['link'] = ("http://vk.com/public%(group)s?w=wall-%(id)s" %
+                            {'group': abs(self.owner_id),
+                             'id': "%s_%s" % (abs(self.owner_id), post['id'])})
         item['date'] = utils.convert_date_to_str(
             datetime.fromtimestamp(post['date']))
-        item['text'] = post['text']
         item['title'] = ("Wall post from %s" % item['date'])
-        item['link'] = ("http://vk.com/public%(group)s?w=wall-%(id)s" %
-                        {'group': abs(self.owner_id),
-                         'id': "%s_%s" % (abs(self.owner_id), post['id'])})
+        item['author'] = ("http://vk.com/" +
+                          ('id%s' % post['from_id']
+                           if post['from_id'] > 0
+                           else 'club%s' % abs(post['from_id'])))
         yield item
 
 
@@ -151,6 +166,10 @@ def _parse_vk_board(self, response):
             item['link'] = ("http://vk.com/public%(group)s?w=wall-%(id)s" %
                             {'group': abs(self.owner_id),
                              'id': "%s_%s" % (abs(self.owner_id), post['id'])})
+            item['author'] = ("http://vk.com/" +
+                              ('id%s' % post['from_id']
+                               if post['from_id'] > 0
+                               else 'club%s' % abs(post['from_id'])))
             yield item
 
     # FIXME last 100 comments per request is VK API limitation
@@ -292,7 +311,7 @@ def create_vk_spider(name, module, boards=None, owner_id=None, url=None,
     # XXX call to utils.get_access_token left only for convenient
     # scrapy crawl spider-name calls.
     # FIXME change to calls from control.py one day
-    # access_token = access_token or utils.get_access_token()
+    access_token = access_token or utils.get_access_token()
     generated = gen_vk_spider_class(
         name=name, owner_id=owner_id, boards=boards, access_token=access_token)
     # a nasty hack to make generated class discoverable by scrapy

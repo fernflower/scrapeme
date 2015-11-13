@@ -4,7 +4,9 @@
   {% for item in items %}
   <a href={{item["link"]}}><h1>{{item["title"]}}</h1></a>
   <p>{{item["text"]}}</p>
-  <p>{{item["date"]}}</p>
+  <p>Date: {{item["date"]}}</p>
+  <p>Source: {{item["source"]}}</p>
+  <p>Author: <a href='{{item["author"]}}'>{{item["author"]}}</a></p>
   {% endfor %}
 {% endblock %}
 

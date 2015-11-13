@@ -33,7 +33,7 @@ TEMPLATES_DIR = "templates"
 MAILER_SETTINGS = secret_settings.MY_MAILER_SETTINGS
 MAIL_RECIPIENT_LIST = secret_settings.MY_MAIL_RECIPIENT_LIST
 # FIXME move queries out of global settings someday
-QUERY = u"бас,контрабас,jazz,джаз,скрипка,аккордеон,кахон,французский"
+QUERY = u"бас,контрабас,jazz,джаз,скрипка,аккордеон,кахон,французский,музыкант"
 # max number of posts to output per source
 QUERY_ROWS = 100
 # days from now that a post remains actual (later won't be shown and may be

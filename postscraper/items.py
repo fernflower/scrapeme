@@ -16,3 +16,5 @@ class PostItem(scrapy.Item):
     date = scrapy.Field()
     # crawler name where the item came from
     source = scrapy.Field()
+    # can be null
+    author = scrapy.Field()

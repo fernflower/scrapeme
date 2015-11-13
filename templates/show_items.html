@@ -19,7 +19,7 @@
         <div class="form-group">
             <label class="col-md-4 control-label" for="radios">Source</label>
             <div class="col-md-4"> 
-                <select id="source" name="source" class="form-control" multiple="multiple">
+                <select id="source" name="source" size="{{spiders | length}}" style="height: 100%" class="form-control" multiple="multiple">
                 {% for spider_name in spiders %}
                     <option value="{{spider_name}}">{{spider_name}}</option>
                 {% endfor %}
@@ -41,8 +41,9 @@
   {% for item in items %}
   <a href={{item["link"]}}><h1>{{item["title"]}}</h1></a>
   <p>{{item["text"]}}</p>
-  <p>{{item["date"]}}</p>
-  <p>{{item["source"]}}</p>
+  <p>Date: {{item["date"]}}</p>
+  <p>Source: {{item["source"]}}</p>
+  <p>Author: <a href='{{item["author"]}}'>{{item["author"]}}</a></p>
   {% endfor %}
 {% endblock %}
 
