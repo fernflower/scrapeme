@@ -81,7 +81,8 @@ def _parse(self, response):
         rel_link = self.select(sel, 'link')[0].extract().strip()
         link = urlparse.urljoin(response.url, rel_link)
         date = self.process_date(sel)
-        yield scrapy.Request(link, callback=self.fetch_body,
+        yield scrapy.Request(link,
+                             callback=self.fetch_body,
                              meta={'title': title, 'link': link, 'date': date})
 
 

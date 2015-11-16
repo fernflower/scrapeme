@@ -4,20 +4,21 @@ import logging
 import sys
 
 from scrapy import signals
-from scrapy.crawler import CrawlerRunner
 from scrapy.settings import Settings
 from scrapy.xlib.pydispatch import dispatcher
-from scrapy.utils.log import configure_logging
+from scrapy.utils import log
+from scrapy.utils import project
 from twisted import internet
 
 from postscraper import mymailsender
 from postscraper import autogenerate
+from postscraper import crawler
 from postscraper import spider_utils
 from postscraper import settings
 from postscraper import utils
 
 
-configure_logging()
+log.configure_logging()
 LOG = logging.getLogger(__name__)
 # crawlers that are running
 RUNNING_CRAWLERS = []
@@ -52,9 +53,7 @@ def crawl_all(token=None):
                  "acquiring one using login data from settings")
         token = utils.get_access_token()
     LOG.info("Access token: %s" % token)
-    runner = CrawlerRunner(settings=Settings(
-        {'DOWNLOAD_DELAY': settings.DOWNLOAD_DELAY,
-         'ITEM_PIPELINES': settings.ITEM_PIPELINES}))
+    runner = crawler.CrawlerRunner(project.get_project_settings())
 
     dispatcher.connect(on_close, signal=signals.spider_closed)
     for spider_cls in spider_utils.find_spiders():
